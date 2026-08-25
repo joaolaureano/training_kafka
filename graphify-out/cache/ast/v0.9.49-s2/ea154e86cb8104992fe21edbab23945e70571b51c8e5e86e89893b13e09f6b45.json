@@ -1,0 +1,1 @@
+{"nodes": [{"id": "pkg_metrics_consumer", "label": "metrics-consumer", "file_type": "code", "type": "package", "ecosystem": "maven", "source_file": "metrics-consumer/pom.xml", "source_location": "L1"}], "edges": []}

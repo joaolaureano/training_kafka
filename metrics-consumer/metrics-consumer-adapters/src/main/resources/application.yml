@@ -1,0 +1,69 @@
+spring:
+  application:
+    name: metrics-consumer
+
+  # Sem profile explícito, roda em memória: dá para experimentar o serviço
+  # inteiro sem criar arquivo nenhum no disco.
+  profiles:
+    default: inmemory
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9094}
+    consumer:
+      group-id: metrics-consumer
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        # O produtor não envia cabeçalho de tipo — este contexto declara qual
+        # classe SUA espera. É o que mantém os dois bounded contexts desacoplados.
+        spring.json.value.default.type: dev.joaolaureano.trainingkafka.analytics.adapters.messaging.OrderPlacedMessage
+        spring.json.use.type.headers: false
+        spring.json.trusted.packages: dev.joaolaureano.trainingkafka.analytics.adapters.messaging
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      properties:
+        spring.json.add.type.headers: false
+    listener:
+      # UM consumidor por vez, de propósito.
+      #
+      # CustomerOrderPattern é seguro por construção (o tópico é particionado por
+      # customerId, então cada cliente sempre cai na mesma partição). Mas
+      # ProductSalesRecord NÃO é: o mesmo produto aparece em pedidos de clientes
+      # diferentes, logo em partições diferentes, logo em threads diferentes — e
+      # dois ciclos findOrCreate/registerSale/save concorrentes sobre o mesmo
+      # produto perderiam uma venda (lost update clássico).
+      #
+      # Aumentar este número exige antes introduzir controle de versão otimista
+      # nos repositórios. Ficou como exercício explícito, não como esquecimento.
+      concurrency: 1
+
+analytics:
+  suspicion:
+    max-orders: 5
+    window: 10s
+  persistence:
+    sqlite:
+      path: data/metrics.db
+    duckdb:
+      path: data/metrics.duckdb
+
+server:
+  port: 8081
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    dev.joaolaureano.trainingkafka: DEBUG

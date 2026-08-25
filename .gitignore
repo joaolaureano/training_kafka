@@ -1,0 +1,20 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/timing.properties
+
+# Dados gerados em runtime pelos adapters de persistência
+data/*
+!data/.gitkeep
+
+# Load tests
+load-tests/node_modules/
+load-tests/dist/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# macOS
+.DS_Store

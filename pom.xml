@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>dev.joaolaureano.trainingkafka</groupId>
+  <artifactId>training-kafka</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>training-kafka</name>
+  <description>Laboratório de Kafka + DDD tático + Ports and Adapters</description>
+
+  <!--
+    NOTA DE DESIGN: este POM NÃO herda de spring-boot-starter-parent.
+    Herdar traria o plugin do Spring Boot e o gerenciamento de build para TODOS os
+    módulos, inclusive os *-domain — que devem permanecer completamente ignorantes
+    da existência do Spring. Em vez disso, importamos apenas o BOM de versões.
+  -->
+
+  <modules>
+    <module>order-service</module>
+    <module>metrics-consumer</module>
+    <module>log-aggregator</module>
+  </modules>
+
+  <properties>
+    <maven.compiler.release>21</maven.compiler.release>
+    <!--
+      Preserva os nomes dos parâmetros no bytecode.
+
+      O spring-boot-starter-parent liga isso automaticamente; como importamos só
+      o BOM (para manter o plugin do Spring longe dos módulos de domínio), a flag
+      precisa ser declarada à mão. Sem ela, @RequestParam sem nome explícito falha
+      em runtime com 500 — não em tempo de compilação.
+    -->
+    <maven.compiler.parameters>true</maven.compiler.parameters>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <spring-boot.version>3.5.16</spring-boot.version>
+    <sqlite-jdbc.version>3.53.2.1</sqlite-jdbc.version>
+    <duckdb.version>1.5.5.1</duckdb.version>
+    <junit.version>5.11.4</junit.version>
+    <assertj.version>3.27.3</assertj.version>
+
+    <enforcer-plugin.version>3.6.3</enforcer-plugin.version>
+    <surefire-plugin.version>3.5.2</surefire-plugin.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${spring-boot.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>${junit.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.assertj</groupId>
+        <artifactId>assertj-core</artifactId>
+        <version>${assertj.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.xerial</groupId>
+        <artifactId>sqlite-jdbc</artifactId>
+        <version>${sqlite-jdbc.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.duckdb</groupId>
+        <artifactId>duckdb_jdbc</artifactId>
+        <version>${duckdb.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-maven-plugin</artifactId>
+          <version>${spring-boot.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>${enforcer-plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>${surefire-plugin.version}</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>

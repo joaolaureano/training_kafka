@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: order-service
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9094}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+      properties:
+        # Sem cabeçalho de tipo Java na mensagem. Se ele fosse enviado, o consumidor
+        # precisaria conhecer o nome completo da classe do PRODUTOR para desserializar
+        # — um acoplamento entre bounded contexts pelo classpath, que é justamente o
+        # que a tradução na fronteira existe para evitar.
+        spring.json.add.type.headers: false
+        # Preserva a ordem por partição mesmo com retentativa.
+        max.in.flight.requests.per.connection: 1
+        enable.idempotence: true
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    dev.joaolaureano.trainingkafka: DEBUG

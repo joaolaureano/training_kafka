@@ -1,9 +1,6 @@
 package dev.joaolaureano.trainingkafka.analytics.adapters.messaging;
 
 import dev.joaolaureano.trainingkafka.analytics.application.OrderPlacedHandler;
-import dev.joaolaureano.trainingkafka.analytics.domain.model.InvalidValueException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -12,11 +9,14 @@ import org.springframework.stereotype.Component;
  *
  * Traduz e delega — nada mais. A anotação {@code @KafkaListener} vive aqui, na
  * borda, e em nenhum outro lugar do serviço.
+ *
+ * Não há try/catch: a falha sobe para o error handler do container, que decide
+ * entre retentar e mandar para a DLQ conforme {@code kafka.dlq.*}. Engolir a
+ * exceção aqui era o que impedia essa política de existir — e fazia a mensagem
+ * problemática desaparecer sem deixar rastro inspecionável.
  */
 @Component
 public class OrderListener {
-
-    private static final Logger log = LoggerFactory.getLogger(OrderListener.class);
 
     private final OrderPlacedHandler handler;
 
@@ -26,13 +26,6 @@ public class OrderListener {
 
     @KafkaListener(topics = Topics.ORDERS, groupId = "${spring.kafka.consumer.group-id}")
     public void onOrderPlaced(OrderPlacedMessage message) {
-        try {
-            handler.handle(OrderPlacedTranslator.toDomainEvent(message));
-        } catch (InvalidValueException malformed) {
-            // Mensagem envenenada: registrar e seguir. Relançar faria o Kafka
-            // reentregar o mesmo payload inválido para sempre, travando a partição
-            // inteira atrás de uma mensagem que nunca vai ser aceita.
-            log.warn("Mensagem descartada por payload inválido: {}", malformed.getMessage());
-        }
+        handler.handle(OrderPlacedTranslator.toDomainEvent(message));
     }
 }

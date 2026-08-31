@@ -103,9 +103,9 @@ mvn clean install
 Cada um numa aba de terminal:
 
 ```bash
-java -jar order-service/order-service-adapters/target/order-service-adapters-0.1.0-SNAPSHOT.jar
-java -jar metrics-consumer/metrics-consumer-adapters/target/metrics-consumer-adapters-0.1.0-SNAPSHOT.jar
-java -jar log-aggregator/log-aggregator-adapters/target/log-aggregator-adapters-0.1.0-SNAPSHOT.jar
+java -jar order-service/order-service-bootstrap/target/order-service-bootstrap-0.1.0-SNAPSHOT.jar
+java -jar metrics-consumer/metrics-consumer-bootstrap/target/metrics-consumer-bootstrap-0.1.0-SNAPSHOT.jar
+java -jar log-aggregator/log-aggregator-bootstrap/target/log-aggregator-bootstrap-0.1.0-SNAPSHOT.jar
 ```
 
 ### 4. Um pedido
@@ -130,14 +130,14 @@ completamente diferentes, **sem tocar numa linha de domínio**:
 
 ```bash
 # App B
-java -jar .../metrics-consumer-adapters-0.1.0-SNAPSHOT.jar --spring.profiles.active=inmemory   # default
-java -jar .../metrics-consumer-adapters-0.1.0-SNAPSHOT.jar --spring.profiles.active=sqlite
-java -jar .../metrics-consumer-adapters-0.1.0-SNAPSHOT.jar --spring.profiles.active=duckdb
+java -jar .../metrics-consumer-bootstrap-0.1.0-SNAPSHOT.jar --spring.profiles.active=inmemory   # default
+java -jar .../metrics-consumer-bootstrap-0.1.0-SNAPSHOT.jar --spring.profiles.active=sqlite
+java -jar .../metrics-consumer-bootstrap-0.1.0-SNAPSHOT.jar --spring.profiles.active=duckdb
 
 # App C
-java -jar .../log-aggregator-adapters-0.1.0-SNAPSHOT.jar --spring.profiles.active=stdout       # default
-java -jar .../log-aggregator-adapters-0.1.0-SNAPSHOT.jar --spring.profiles.active=jsonl
-java -jar .../log-aggregator-adapters-0.1.0-SNAPSHOT.jar --spring.profiles.active=duckdb
+java -jar .../log-aggregator-bootstrap-0.1.0-SNAPSHOT.jar --spring.profiles.active=stdout       # default
+java -jar .../log-aggregator-bootstrap-0.1.0-SNAPSHOT.jar --spring.profiles.active=jsonl
+java -jar .../log-aggregator-bootstrap-0.1.0-SNAPSHOT.jar --spring.profiles.active=duckdb
 ```
 
 | App | Profile | Onde os dados param | Arquivo |
@@ -245,17 +245,39 @@ que o acerto.
 
 ### Por que módulos Maven separados
 
-Cada serviço são três módulos, e a dependência só aponta para dentro:
+Cada serviço são quatro módulos, e a dependência só aponta para dentro:
 
 | Módulo | Depende de | Dependências externas |
 |---|---|---|
 | `*-domain` | **nada** | só JUnit e AssertJ, em escopo de teste |
 | `*-application` | `*-domain` | nenhuma |
-| `*-adapters` | `*-application` | Spring, Kafka, Jackson, drivers JDBC |
+| `*-adapters` | `*-domain` | Spring, Kafka, Jackson, drivers JDBC |
+| `*-bootstrap` | os três acima | Spring Boot (é onde o `main` mora) |
 
 Convenção não segura isso; o compilador sim. Além disso, o `maven-enforcer-plugin` barra
 dependências de infraestrutura nos módulos de domínio com mensagem explicativa — inclusive
-as transitivas.
+as transitivas — e barra a dependência `*-adapters → *-application` no módulo de adapters.
+
+### Por que o módulo `*-bootstrap`
+
+Repare na tabela: **o adapter não depende da camada de aplicação**. Isso é deliberado, e é
+o que o módulo `*-bootstrap` existe para permitir.
+
+Um adapter de entrada precisa que alguém execute o caso de uso — mas não precisa saber
+quem. Então ele declara, no próprio pacote, a interface de que precisa:
+`PlaceOrderPort`, `LogQueryPort`, `OrderPlacedPort`. Do outro lado, a camada de aplicação
+oferece o que sabe fazer. Nenhum dos dois módulos importa o outro; quem costura os dois
+lados é uma **facade** no `*-bootstrap` — o único módulo que enxerga tudo, porque enxergar
+tudo é exatamente o trabalho dele.
+
+O mesmo vale para o lado de saída: `KafkaActivityLogPublisher` publica logs com uma
+assinatura em tipos crus e não implementa `ActivityLogPublisher`; a facade
+`ActivityLogFacade`, no bootstrap, é que implementa o Port da aplicação e delega.
+
+O que mora no `*-bootstrap`: a classe `main`, o `application.yml`, o `*Wiring` (quem
+implementa cada Port), a escolha de persistência por profile e as facades. O que fica no
+`*-adapters`: só tecnologia — controllers, listeners, repositórios, e a configuração
+técnica que não escolhe implementação nenhuma (criação de tópicos, error handler da DLQ).
 
 O POM raiz **não herda** de `spring-boot-starter-parent`, só importa o BOM de versões:
 herdar traria o plugin do Spring para todos os módulos, inclusive os de domínio. O preço
@@ -349,17 +371,20 @@ training_kafka/
 ├── order-service/                App A
 │   ├── order-service-domain/         Order, Money, Quantity, Violations
 │   ├── order-service-application/    PlaceOrderService
-│   └── order-service-adapters/       REST, Kafka, wiring
+│   ├── order-service-adapters/       REST, Kafka
+│   └── order-service-bootstrap/      main, application.yml, wiring, facades
 │
 ├── metrics-consumer/             App B
 │   ├── metrics-consumer-domain/      3 agregados, 4 Ports
 │   ├── metrics-consumer-application/ OrderPlacedHandler, MetricsQueryService
-│   └── metrics-consumer-adapters/    Kafka, REST, 9 implementações de repositório
+│   ├── metrics-consumer-adapters/    Kafka, REST, 9 implementações de repositório
+│   └── metrics-consumer-bootstrap/   main, application.yml, wiring, facades
 │
 ├── log-aggregator/               App C
 │   ├── log-aggregator-domain/        LogEntry, LogFilter, LogRepository
 │   ├── log-aggregator-application/   IngestLogService, LogQueryService
-│   └── log-aggregator-adapters/      Kafka, REST, 3 implementações
+│   ├── log-aggregator-adapters/      Kafka, REST, 3 implementações
+│   └── log-aggregator-bootstrap/     main, application.yml, wiring, facades
 │
 └── load-tests/                   k6 + faker, empacotado com esbuild
 ```

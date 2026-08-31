@@ -1,0 +1,1 @@
+{"nodes": [{"id": "pkg_log_aggregator", "label": "log-aggregator", "file_type": "code", "type": "package", "ecosystem": "maven", "source_file": "log-aggregator/pom.xml", "source_location": "L1"}], "edges": []}

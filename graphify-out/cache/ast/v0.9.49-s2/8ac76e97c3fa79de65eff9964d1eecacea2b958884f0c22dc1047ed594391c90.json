@@ -1,0 +1,1 @@
+{"nodes": [{"id": "pkg_order_service", "label": "order-service", "file_type": "code", "type": "package", "ecosystem": "maven", "source_file": "order-service/pom.xml", "source_location": "L1"}], "edges": []}

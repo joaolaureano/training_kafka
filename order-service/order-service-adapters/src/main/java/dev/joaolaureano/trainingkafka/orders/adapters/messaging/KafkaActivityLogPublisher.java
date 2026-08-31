@@ -1,12 +1,21 @@
 package dev.joaolaureano.trainingkafka.orders.adapters.messaging;
 
-import dev.joaolaureano.trainingkafka.orders.application.port.ActivityLog;
-import dev.joaolaureano.trainingkafka.orders.application.port.ActivityLogPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 
-public class KafkaActivityLogPublisher implements ActivityLogPublisher {
+import java.time.Instant;
+import java.util.Map;
+
+/**
+ * Publica registros de atividade no tópico de logs.
+ *
+ * A assinatura é em tipos crus de propósito: esta classe não implementa
+ * {@code ActivityLogPublisher} — fazer isso a obrigaria a compilar contra o
+ * módulo -application. Quem faz a ponte é a facade montada no bootstrap, que
+ * conhece os dois lados.
+ */
+public class KafkaActivityLogPublisher {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaActivityLogPublisher.class);
 
@@ -18,18 +27,17 @@ public class KafkaActivityLogPublisher implements ActivityLogPublisher {
         this.applicationName = applicationName;
     }
 
-    @Override
-    public void publish(ActivityLog activityLog) {
-        ApplicationLogMessage message = new ApplicationLogMessage(
-                activityLog.level().name(),
-                activityLog.occurredAt().toString(),
+    public void publish(String level, String message, Map<String, String> context, Instant occurredAt) {
+        ApplicationLogMessage payload = new ApplicationLogMessage(
+                level,
+                occurredAt.toString(),
                 applicationName,
-                activityLog.message(),
-                activityLog.context());
+                message,
+                context);
 
         // Chave = nome da aplicação, para agrupar os logs de um mesmo serviço na
         // mesma partição e preservar a ordem cronológica dentro dele.
-        kafkaTemplate.send(Topics.APPLICATION_LOGS, applicationName, message)
+        kafkaTemplate.send(Topics.APPLICATION_LOGS, applicationName, payload)
                 .whenComplete((result, failure) -> {
                     // Log é telemetria: se o envio falhar, registramos localmente e
                     // seguimos. Derrubar um pedido válido porque o log não foi

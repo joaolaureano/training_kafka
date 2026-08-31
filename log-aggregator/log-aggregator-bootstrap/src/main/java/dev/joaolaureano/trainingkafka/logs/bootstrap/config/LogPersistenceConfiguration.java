@@ -1,4 +1,4 @@
-package dev.joaolaureano.trainingkafka.logs.adapters.config;
+package dev.joaolaureano.trainingkafka.logs.bootstrap.config;
 
 import dev.joaolaureano.trainingkafka.logs.adapters.persistence.duckdb.DuckDbLogRepository;
 import dev.joaolaureano.trainingkafka.logs.adapters.persistence.jsonl.JsonlFileLogRepository;

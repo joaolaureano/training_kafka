@@ -1,6 +1,5 @@
 package dev.joaolaureano.trainingkafka.analytics.adapters.messaging;
 
-import dev.joaolaureano.trainingkafka.analytics.application.OrderPlacedHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -18,9 +17,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class OrderListener {
 
-    private final OrderPlacedHandler handler;
+    private final OrderPlacedPort handler;
 
-    public OrderListener(OrderPlacedHandler handler) {
+    public OrderListener(OrderPlacedPort handler) {
         this.handler = handler;
     }
 

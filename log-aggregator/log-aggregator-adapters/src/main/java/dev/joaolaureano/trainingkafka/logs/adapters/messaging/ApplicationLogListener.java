@@ -1,6 +1,5 @@
 package dev.joaolaureano.trainingkafka.logs.adapters.messaging;
 
-import dev.joaolaureano.trainingkafka.logs.application.IngestLogService;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -13,9 +12,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class ApplicationLogListener {
 
-    private final IngestLogService ingest;
+    private final IngestLogPort ingest;
 
-    public ApplicationLogListener(IngestLogService ingest) {
+    public ApplicationLogListener(IngestLogPort ingest) {
         this.ingest = ingest;
     }
 

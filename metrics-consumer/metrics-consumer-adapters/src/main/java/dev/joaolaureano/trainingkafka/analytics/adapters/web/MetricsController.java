@@ -1,6 +1,5 @@
 package dev.joaolaureano.trainingkafka.analytics.adapters.web;
 
-import dev.joaolaureano.trainingkafka.analytics.application.MetricsQueryService;
 import dev.joaolaureano.trainingkafka.analytics.domain.model.ProductId;
 import dev.joaolaureano.trainingkafka.analytics.domain.model.ProductSalesRecord;
 import dev.joaolaureano.trainingkafka.analytics.domain.model.RevenueWindow;
@@ -20,10 +19,10 @@ import java.util.List;
 @RequestMapping("/metrics")
 public class MetricsController {
 
-    private final MetricsQueryService queries;
+    private final MetricsQueryPort queries;
     private final Clock clock;
 
-    public MetricsController(MetricsQueryService queries, Clock clock) {
+    public MetricsController(MetricsQueryPort queries, Clock clock) {
         this.queries = queries;
         this.clock = clock;
     }

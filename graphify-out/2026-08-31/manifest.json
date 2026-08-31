@@ -1,0 +1,836 @@
+{
+  "load-tests/package.json": {
+    "mtime": 1787636587.808755,
+    "seen": 1787674824.316308,
+    "ast_hash": "09e33790735b6b4b717d6876019271b7",
+    "semantic_hash": "09e33790735b6b4b717d6876019271b7"
+  },
+  "load-tests/src/orders-load.js": {
+    "mtime": 1787636932.1991,
+    "seen": 1787674824.31631,
+    "ast_hash": "bb0a0f0cb1a3af5df55502e711067a64",
+    "semantic_hash": "bb0a0f0cb1a3af5df55502e711067a64"
+  },
+  "log-aggregator/log-aggregator-adapters/pom.xml": {
+    "mtime": 1787636036.496838,
+    "seen": 1787674824.3163111,
+    "ast_hash": "42448d8b9f6a7ebf23aa3a38449f1542",
+    "semantic_hash": "42448d8b9f6a7ebf23aa3a38449f1542"
+  },
+  "log-aggregator/log-aggregator-adapters/src/main/java/dev/joaolaureano/trainingkafka/logs/adapters/LogAggregatorApplication.java": {
+    "mtime": 1787636142.0025718,
+    "seen": 1787674824.3163111,
+    "ast_hash": "12335907103060ec535e7de20a9661cf",
+    "semantic_hash": "12335907103060ec535e7de20a9661cf"
+  },
+  "log-aggregator/log-aggregator-adapters/src/main/java/dev/joaolaureano/trainingkafka/logs/adapters/config/LogAggregatorWiring.java": {
+    "mtime": 1787636187.2682676,
+    "seen": 1787674824.316312,
+    "ast_hash": "bdc0d82875a3203080a045086ad8e265",
+    "semantic_hash": "bdc0d82875a3203080a045086ad8e265"
+  },
+  "log-aggregator/log-aggregator-adapters/src/main/java/dev/joaolaureano/trainingkafka/logs/adapters/config/LogPersistenceConfiguration.java": {
+    "mtime": 1787636187.272468,
+    "seen": 1787674824.316313,
+    "ast_hash": "8fa3b6dd71dfc275115decd0167f556a",
+    "semantic_hash": "8fa3b6dd71dfc275115decd0167f556a"
+  },
+  "log-aggregator/log-aggregator-adapters/src/main/java/dev/joaolaureano/trainingkafka/logs/adapters/messaging/ApplicationLogListener.java": {
+    "mtime": 1787928845.021862,
+    "seen": 1788210920.391555,
+    "ast_hash": "08214d3b20ede4f78a4d8bb87a855867",
+    "semantic_hash": ""
+  },
+  "log-aggregator/log-aggregator-adapters/src/main/java/dev/joaolaureano/trainingkafka/logs/adapters/messaging/ApplicationLogMessage.java": {
+    "mtime": 1787636142.0060246,
+    "seen": 1787674824.316315,
+    "ast_hash": "dc069d8ff73f9ec17519c6b011ee6d0a",
+    "semantic_hash": "dc069d8ff73f9ec17519c6b011ee6d0a"
+  },
+  "log-aggregator/log-aggregator-adapters/src/main/java/dev/joaolaureano/trainingkafka/logs/adapters/messaging/LogEntryTranslator.java": {
+    "mtime": 1787636142.0091977,
+    "seen": 1787674824.316316,
+    "ast_hash": "f33f6bfd15fd8f00d857a288a0ecbbb4",
+    "semantic_hash": "f33f6bfd15fd8f00d857a288a0ecbbb4"
+  },
+  "log-aggregator/log-aggregator-adapters/src/main/java/dev/joaolaureano/trainingkafka/logs/adapters/persistence/duckdb/DuckDbLogRepository.java": {
+    "mtime": 1787636197.2174368,
+    "seen": 1787674824.3163168,
+    "ast_hash": "fcae5840ae015d6de77f5df2fca1ecaa",
+    "semantic_hash": "fcae5840ae015d6de77f5df2fca1ecaa"
+  },
+  "log-aggregator/log-aggregator-adapters/src/main/java/dev/joaolaureano/trainingkafka/logs/adapters/persistence/jsonl/JsonlFileLogRepository.java": {
+    "mtime": 1787636160.8337536,
+    "seen": 1787674824.3163168,
+    "ast_hash": "aa44d8202d85f002a79bdbd7f167cb3e",
+    "semantic_hash": "aa44d8202d85f002a79bdbd7f167cb3e"
+  },
+  "log-aggregator/log-aggregator-adapters/src/main/java/dev/joaolaureano/trainingkafka/logs/adapters/persistence/stdout/StdoutLogRepository.java": {
+    "mtime": 1787636139.3603647,
+    "seen": 1787674824.316318,
+    "ast_hash": "03a9dfbb679cd8c242c238b714139daf",
+    "semantic_hash": "03a9dfbb679cd8c242c238b714139daf"
+  },
+  "log-aggregator/log-aggregator-adapters/src/main/java/dev/joaolaureano/trainingkafka/logs/adapters/web/LogController.java": {
+    "mtime": 1787636158.8009539,
+    "seen": 1787674824.316319,
+    "ast_hash": "095daaf5b20be6b39445c7aa5402e25e",
+    "semantic_hash": "095daaf5b20be6b39445c7aa5402e25e"
+  },
+  "log-aggregator/log-aggregator-adapters/src/main/java/dev/joaolaureano/trainingkafka/logs/adapters/web/LogExceptionHandler.java": {
+    "mtime": 1787636158.8036342,
+    "seen": 1787674824.31632,
+    "ast_hash": "6230ba84e15471e0b71c984c6083fb3f",
+    "semantic_hash": "6230ba84e15471e0b71c984c6083fb3f"
+  },
+  "log-aggregator/log-aggregator-adapters/src/test/java/dev/joaolaureano/trainingkafka/logs/adapters/persistence/LogRepositoryContractTest.java": {
+    "mtime": 1787636280.9522684,
+    "seen": 1787674824.3163211,
+    "ast_hash": "5cc5d9b39e1ec72fb8e87c881ea9f4ab",
+    "semantic_hash": "5cc5d9b39e1ec72fb8e87c881ea9f4ab"
+  },
+  "log-aggregator/log-aggregator-adapters/src/test/java/dev/joaolaureano/trainingkafka/logs/adapters/persistence/StdoutLogRepositoryTest.java": {
+    "mtime": 1787636306.3616157,
+    "seen": 1787674824.316322,
+    "ast_hash": "2b0a8825dbb3ea1678e01d0929b03022",
+    "semantic_hash": "2b0a8825dbb3ea1678e01d0929b03022"
+  },
+  "log-aggregator/log-aggregator-application/pom.xml": {
+    "mtime": 1787636036.4645967,
+    "seen": 1787674824.316323,
+    "ast_hash": "9f7f7d57f8764b52677c2b6e23f33745",
+    "semantic_hash": "9f7f7d57f8764b52677c2b6e23f33745"
+  },
+  "log-aggregator/log-aggregator-application/src/main/java/dev/joaolaureano/trainingkafka/logs/application/IngestLogService.java": {
+    "mtime": 1787636122.648922,
+    "seen": 1787674824.316323,
+    "ast_hash": "f4ca833b2309be3da3a83a76ba2619f7",
+    "semantic_hash": "f4ca833b2309be3da3a83a76ba2619f7"
+  },
+  "log-aggregator/log-aggregator-application/src/main/java/dev/joaolaureano/trainingkafka/logs/application/LogQueryService.java": {
+    "mtime": 1787636122.6527817,
+    "seen": 1787674824.316324,
+    "ast_hash": "469df89e8957359294ebeb874fe22982",
+    "semantic_hash": "469df89e8957359294ebeb874fe22982"
+  },
+  "log-aggregator/log-aggregator-domain/pom.xml": {
+    "mtime": 1787636036.461541,
+    "seen": 1787674824.3163252,
+    "ast_hash": "6dc66a49293191677a1707f93ce1af70",
+    "semantic_hash": "6dc66a49293191677a1707f93ce1af70"
+  },
+  "log-aggregator/log-aggregator-domain/src/main/java/dev/joaolaureano/trainingkafka/logs/domain/model/ApplicationName.java": {
+    "mtime": 1787636049.8598082,
+    "seen": 1787674824.316326,
+    "ast_hash": "0896f5b97fabf7ee0f6dc791bbb60c6e",
+    "semantic_hash": "0896f5b97fabf7ee0f6dc791bbb60c6e"
+  },
+  "log-aggregator/log-aggregator-domain/src/main/java/dev/joaolaureano/trainingkafka/logs/domain/model/InvalidLogException.java": {
+    "mtime": 1787636049.852628,
+    "seen": 1787674824.3163269,
+    "ast_hash": "179d07d48f7dd79c3924366afd967b55",
+    "semantic_hash": "179d07d48f7dd79c3924366afd967b55"
+  },
+  "log-aggregator/log-aggregator-domain/src/main/java/dev/joaolaureano/trainingkafka/logs/domain/model/LogEntry.java": {
+    "mtime": 1787636073.9072134,
+    "seen": 1787674824.316328,
+    "ast_hash": "cb2cb68bc54c06ad163bf85c45b64c19",
+    "semantic_hash": "cb2cb68bc54c06ad163bf85c45b64c19"
+  },
+  "log-aggregator/log-aggregator-domain/src/main/java/dev/joaolaureano/trainingkafka/logs/domain/model/LogFilter.java": {
+    "mtime": 1787636073.9108996,
+    "seen": 1787674824.316329,
+    "ast_hash": "732742f37ba57206f444c118d6ad85f1",
+    "semantic_hash": "732742f37ba57206f444c118d6ad85f1"
+  },
+  "log-aggregator/log-aggregator-domain/src/main/java/dev/joaolaureano/trainingkafka/logs/domain/model/LogLevel.java": {
+    "mtime": 1787636049.8565156,
+    "seen": 1787674824.316329,
+    "ast_hash": "43a04bfb9c9ea82247ec26f2fe261f41",
+    "semantic_hash": "43a04bfb9c9ea82247ec26f2fe261f41"
+  },
+  "log-aggregator/log-aggregator-domain/src/main/java/dev/joaolaureano/trainingkafka/logs/domain/model/TimeRange.java": {
+    "mtime": 1787636049.8628805,
+    "seen": 1787674824.31633,
+    "ast_hash": "7b8d19c38e874d356f3a5bacac6dd68b",
+    "semantic_hash": "7b8d19c38e874d356f3a5bacac6dd68b"
+  },
+  "log-aggregator/log-aggregator-domain/src/main/java/dev/joaolaureano/trainingkafka/logs/domain/port/LogRepository.java": {
+    "mtime": 1787636073.9143822,
+    "seen": 1787674824.316331,
+    "ast_hash": "bfcf0efc2096bc6bb0d331be0289df87",
+    "semantic_hash": "bfcf0efc2096bc6bb0d331be0289df87"
+  },
+  "log-aggregator/log-aggregator-domain/src/test/java/dev/joaolaureano/trainingkafka/logs/domain/model/LogFilterTest.java": {
+    "mtime": 1787636228.3935807,
+    "seen": 1787674824.316332,
+    "ast_hash": "f255404bd8e8b11ee481ee80e88b3a5f",
+    "semantic_hash": "f255404bd8e8b11ee481ee80e88b3a5f"
+  },
+  "log-aggregator/pom.xml": {
+    "mtime": 1787636036.458946,
+    "seen": 1787674824.316333,
+    "ast_hash": "acc0e4c77178544f4c2b236386ba78eb",
+    "semantic_hash": "acc0e4c77178544f4c2b236386ba78eb"
+  },
+  "metrics-consumer/metrics-consumer-adapters/pom.xml": {
+    "mtime": 1787635002.2781458,
+    "seen": 1787674824.316333,
+    "ast_hash": "cb8243ddc411f765af42316e8a5d3bf2",
+    "semantic_hash": "cb8243ddc411f765af42316e8a5d3bf2"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/MetricsConsumerApplication.java": {
+    "mtime": 1787635198.1459203,
+    "seen": 1787674824.316334,
+    "ast_hash": "402598d16d89d657799d35d86b1163fc",
+    "semantic_hash": "402598d16d89d657799d35d86b1163fc"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/config/AnalyticsWiring.java": {
+    "mtime": 1787635375.72065,
+    "seen": 1787674824.3163352,
+    "ast_hash": "bc05e5b75e89f010e41e13521b798b17",
+    "semantic_hash": "bc05e5b75e89f010e41e13521b798b17"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/config/PersistenceConfiguration.java": {
+    "mtime": 1787635402.964932,
+    "seen": 1787674824.3163362,
+    "ast_hash": "7be1179dfa2a7f302a8a0888435d8f8b",
+    "semantic_hash": "7be1179dfa2a7f302a8a0888435d8f8b"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/config/SuspicionProperties.java": {
+    "mtime": 1787635375.7159073,
+    "seen": 1787674824.3163369,
+    "ast_hash": "ebae89be2648c283b34186cb73ed12e8",
+    "semantic_hash": "ebae89be2648c283b34186cb73ed12e8"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/messaging/ApplicationLogMessage.java": {
+    "mtime": 1787635336.0154634,
+    "seen": 1787674824.3163378,
+    "ast_hash": "200628df7d41878ff783d741a84e0512",
+    "semantic_hash": "200628df7d41878ff783d741a84e0512"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/messaging/KafkaDomainEventPublisher.java": {
+    "mtime": 1787635336.0196493,
+    "seen": 1787674824.3163378,
+    "ast_hash": "769a823c865aed674ce7333f570e4408",
+    "semantic_hash": "769a823c865aed674ce7333f570e4408"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/messaging/OrderListener.java": {
+    "mtime": 1787928845.023836,
+    "seen": 1788210920.3915892,
+    "ast_hash": "fd701f96d0f46993601da396fade4def",
+    "semantic_hash": ""
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/messaging/OrderPlacedMessage.java": {
+    "mtime": 1787635313.5994775,
+    "seen": 1787674824.31634,
+    "ast_hash": "0ba3b5b23d3bf437218a07085f59bab5",
+    "semantic_hash": "0ba3b5b23d3bf437218a07085f59bab5"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/messaging/OrderPlacedTranslator.java": {
+    "mtime": 1787635313.6029963,
+    "seen": 1787674824.316341,
+    "ast_hash": "8859a99449d9d0f6e490bf406c9b6a87",
+    "semantic_hash": "8859a99449d9d0f6e490bf406c9b6a87"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/messaging/Topics.java": {
+    "mtime": 1787635313.5958433,
+    "seen": 1787674824.316342,
+    "ast_hash": "dd7d82457c266859b783c37b8570f403",
+    "semantic_hash": "dd7d82457c266859b783c37b8570f403"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/persistence/MoneyCents.java": {
+    "mtime": 1787635176.323969,
+    "seen": 1787674824.316343,
+    "ast_hash": "92deecb33fc383269a2eba0e8e78f968",
+    "semantic_hash": "92deecb33fc383269a2eba0e8e78f968"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/persistence/duckdb/DuckDbCustomerPatternRepository.java": {
+    "mtime": 1787635388.2239943,
+    "seen": 1787674824.316343,
+    "ast_hash": "26807d5f3acfe4c313cd1bd66a5ea251",
+    "semantic_hash": "26807d5f3acfe4c313cd1bd66a5ea251"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/persistence/duckdb/DuckDbOrderLedgerRepository.java": {
+    "mtime": 1787635402.6281557,
+    "seen": 1787674824.316344,
+    "ast_hash": "84e728078aab2ed72607d62bef23926b",
+    "semantic_hash": "84e728078aab2ed72607d62bef23926b"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/persistence/duckdb/DuckDbProductSalesRepository.java": {
+    "mtime": 1787635361.7675264,
+    "seen": 1787674824.316345,
+    "ast_hash": "387ecd01a32c7c27b8049c12717604c6",
+    "semantic_hash": "387ecd01a32c7c27b8049c12717604c6"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/persistence/inmemory/InMemoryCustomerPatternRepository.java": {
+    "mtime": 1787635328.2915077,
+    "seen": 1787674824.3163462,
+    "ast_hash": "4361b9d0cfe63164f0c2640317e35750",
+    "semantic_hash": "4361b9d0cfe63164f0c2640317e35750"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/persistence/inmemory/InMemoryOrderLedgerRepository.java": {
+    "mtime": 1787635337.7446702,
+    "seen": 1787674824.316347,
+    "ast_hash": "00231eac46814f2a64687c176950aa52",
+    "semantic_hash": "00231eac46814f2a64687c176950aa52"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/persistence/inmemory/InMemoryProductSalesRepository.java": {
+    "mtime": 1787635317.8149333,
+    "seen": 1787674824.3163478,
+    "ast_hash": "504600eb6ce916b46eb48bd0c419a1d1",
+    "semantic_hash": "504600eb6ce916b46eb48bd0c419a1d1"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/persistence/sqlite/SqliteCustomerPatternRepository.java": {
+    "mtime": 1787635475.1617703,
+    "seen": 1787674824.316349,
+    "ast_hash": "a6aaf6407e8c22c8bb7131cdd2026a43",
+    "semantic_hash": "a6aaf6407e8c22c8bb7131cdd2026a43"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/persistence/sqlite/SqliteOrderLedgerRepository.java": {
+    "mtime": 1787635367.0335789,
+    "seen": 1787674824.31635,
+    "ast_hash": "35a286bdcc8ee20ee22e3b02079e8c60",
+    "semantic_hash": "35a286bdcc8ee20ee22e3b02079e8c60"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/persistence/sqlite/SqliteProductSalesRepository.java": {
+    "mtime": 1787635335.9103785,
+    "seen": 1787674824.31635,
+    "ast_hash": "a0b32bec036ca9bc0a1d101ae88f0fc3",
+    "semantic_hash": "a0b32bec036ca9bc0a1d101ae88f0fc3"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/persistence/sqlite/SqliteRepositoryException.java": {
+    "mtime": 1787635315.8517458,
+    "seen": 1787674824.316351,
+    "ast_hash": "efcb79e7dd8d6a05131f90bceefee3f2",
+    "semantic_hash": "efcb79e7dd8d6a05131f90bceefee3f2"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/web/AnalyticsExceptionHandler.java": {
+    "mtime": 1787635354.0709367,
+    "seen": 1787674824.316352,
+    "ast_hash": "2c7a36cef66d45f068882a619756ef04",
+    "semantic_hash": "2c7a36cef66d45f068882a619756ef04"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/web/MetricsController.java": {
+    "mtime": 1787635354.0655532,
+    "seen": 1787674824.316353,
+    "ast_hash": "e3d8297eb76307c77224628fb2241eff",
+    "semantic_hash": "e3d8297eb76307c77224628fb2241eff"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/test/java/dev/joaolaureano/trainingkafka/analytics/adapters/persistence/CustomerPatternRepositoryContractTest.java": {
+    "mtime": 1787635585.460219,
+    "seen": 1787674824.316354,
+    "ast_hash": "acef288f917f1dd93b5b5720d473d0f2",
+    "semantic_hash": "acef288f917f1dd93b5b5720d473d0f2"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/test/java/dev/joaolaureano/trainingkafka/analytics/adapters/persistence/OrderLedgerRepositoryContractTest.java": {
+    "mtime": 1787635615.478817,
+    "seen": 1787674824.316355,
+    "ast_hash": "2dba95ad841104dc72cdf7f2d651d4db",
+    "semantic_hash": "2dba95ad841104dc72cdf7f2d651d4db"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/test/java/dev/joaolaureano/trainingkafka/analytics/adapters/persistence/ProductSalesRepositoryContractTest.java": {
+    "mtime": 1787635537.5718472,
+    "seen": 1787674824.3163562,
+    "ast_hash": "8f59b7f5ea990bb0a40a15329a136a9e",
+    "semantic_hash": "8f59b7f5ea990bb0a40a15329a136a9e"
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/test/java/dev/joaolaureano/trainingkafka/analytics/adapters/persistence/TestRepositories.java": {
+    "mtime": 1787635502.6863277,
+    "seen": 1787674824.3163562,
+    "ast_hash": "5acae09271ee6651612e7f4cb1ebd4c8",
+    "semantic_hash": "5acae09271ee6651612e7f4cb1ebd4c8"
+  },
+  "metrics-consumer/metrics-consumer-application/pom.xml": {
+    "mtime": 1787634827.5145085,
+    "seen": 1787674824.3163571,
+    "ast_hash": "ce0e6535f7e3fbdb6b2d88473c3731a9",
+    "semantic_hash": "ce0e6535f7e3fbdb6b2d88473c3731a9"
+  },
+  "metrics-consumer/metrics-consumer-application/src/main/java/dev/joaolaureano/trainingkafka/analytics/application/MetricsQueryService.java": {
+    "mtime": 1787635094.3684742,
+    "seen": 1787674824.3163579,
+    "ast_hash": "88df2c6b565f66b9fd6bbf18cee83c1f",
+    "semantic_hash": "88df2c6b565f66b9fd6bbf18cee83c1f"
+  },
+  "metrics-consumer/metrics-consumer-application/src/main/java/dev/joaolaureano/trainingkafka/analytics/application/OrderPlacedHandler.java": {
+    "mtime": 1787635094.3659859,
+    "seen": 1787674824.3163588,
+    "ast_hash": "119dcaf572a5bf45558978f6cc2ee02e",
+    "semantic_hash": "119dcaf572a5bf45558978f6cc2ee02e"
+  },
+  "metrics-consumer/metrics-consumer-application/src/test/java/dev/joaolaureano/trainingkafka/analytics/application/OrderPlacedHandlerTest.java": {
+    "mtime": 1787635134.094236,
+    "seen": 1787674824.31636,
+    "ast_hash": "960a5a4f4c9a5e63375abf56a585aed6",
+    "semantic_hash": "960a5a4f4c9a5e63375abf56a585aed6"
+  },
+  "metrics-consumer/metrics-consumer-domain/pom.xml": {
+    "mtime": 1787634827.5102623,
+    "seen": 1787674824.31636,
+    "ast_hash": "3c9991e400c1ad0030ca73439297d903",
+    "semantic_hash": "3c9991e400c1ad0030ca73439297d903"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/event/DomainEvent.java": {
+    "mtime": 1787634892.8140926,
+    "seen": 1787674824.316361,
+    "ast_hash": "14a81edaefd729f51ec0c9f778c32004",
+    "semantic_hash": "14a81edaefd729f51ec0c9f778c32004"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/event/OrderPlaced.java": {
+    "mtime": 1787634892.8178186,
+    "seen": 1787674824.316362,
+    "ast_hash": "f88b77a6e91703117606835d7788bc58",
+    "semantic_hash": "f88b77a6e91703117606835d7788bc58"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/event/SuspiciousPatternDetected.java": {
+    "mtime": 1787634892.8218348,
+    "seen": 1787674824.316363,
+    "ast_hash": "8d0ef0f5a1ecb3ea7bd0683d130e8947",
+    "semantic_hash": "8d0ef0f5a1ecb3ea7bd0683d130e8947"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/model/CustomerId.java": {
+    "mtime": 1787634840.528059,
+    "seen": 1787674824.316364,
+    "ast_hash": "01c1e801d048376962a6d445c19f4b03",
+    "semantic_hash": "01c1e801d048376962a6d445c19f4b03"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/model/CustomerOrderPattern.java": {
+    "mtime": 1787634960.6211627,
+    "seen": 1787674824.316365,
+    "ast_hash": "7ff363b216bbb8189d0500b376d17bc9",
+    "semantic_hash": "7ff363b216bbb8189d0500b376d17bc9"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/model/InvalidValueException.java": {
+    "mtime": 1787634840.5109625,
+    "seen": 1787674824.3163662,
+    "ast_hash": "adfb0a7de407770f1f8f5435d3d6c187",
+    "semantic_hash": "adfb0a7de407770f1f8f5435d3d6c187"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/model/Money.java": {
+    "mtime": 1787634855.995008,
+    "seen": 1787674824.3163662,
+    "ast_hash": "edcba31f11ac060222bce7dd0bfd02db",
+    "semantic_hash": "edcba31f11ac060222bce7dd0bfd02db"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/model/OrderId.java": {
+    "mtime": 1787634840.5309875,
+    "seen": 1787674824.3163671,
+    "ast_hash": "97e28c8e5d0bbfa08fefd63343bbd6bb",
+    "semantic_hash": "97e28c8e5d0bbfa08fefd63343bbd6bb"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/model/OrderPlacement.java": {
+    "mtime": 1787634930.0800674,
+    "seen": 1787674824.3163679,
+    "ast_hash": "db994c42d76970ad747978c409f1fa1f",
+    "semantic_hash": "db994c42d76970ad747978c409f1fa1f"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/model/OrderRecord.java": {
+    "mtime": 1787634930.085097,
+    "seen": 1787674824.3163688,
+    "ast_hash": "2e29b7a108c7f33233a1eeccd9e1869e",
+    "semantic_hash": "2e29b7a108c7f33233a1eeccd9e1869e"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/model/ProductId.java": {
+    "mtime": 1787634840.5202792,
+    "seen": 1787674824.31637,
+    "ast_hash": "fd6fc8d95d49a87ce6546d79630b7828",
+    "semantic_hash": "fd6fc8d95d49a87ce6546d79630b7828"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/model/ProductSalesRecord.java": {
+    "mtime": 1787634916.2869642,
+    "seen": 1787674824.31637,
+    "ast_hash": "097c97a43335a129d599f3ae0e70e748",
+    "semantic_hash": "097c97a43335a129d599f3ae0e70e748"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/model/Quantity.java": {
+    "mtime": 1787634855.987132,
+    "seen": 1787674824.316371,
+    "ast_hash": "298a094d9614552fb50669a00a970eeb",
+    "semantic_hash": "298a094d9614552fb50669a00a970eeb"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/model/RevenueWindow.java": {
+    "mtime": 1787634878.4080844,
+    "seen": 1787674824.316372,
+    "ast_hash": "5caec4d130e542a0c606061de3e3a40b",
+    "semantic_hash": "5caec4d130e542a0c606061de3e3a40b"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/model/SuspicionPolicy.java": {
+    "mtime": 1787634878.3991594,
+    "seen": 1787674824.316373,
+    "ast_hash": "306a95d88a6453733a293b7b12cdb757",
+    "semantic_hash": "306a95d88a6453733a293b7b12cdb757"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/model/TimeRange.java": {
+    "mtime": 1787634878.3938231,
+    "seen": 1787674824.316374,
+    "ast_hash": "024cff7c8aa35fd37f12829a0969e8c2",
+    "semantic_hash": "024cff7c8aa35fd37f12829a0969e8c2"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/model/TopSellerPolicy.java": {
+    "mtime": 1787634878.4038136,
+    "seen": 1787674824.316375,
+    "ast_hash": "53a19e50b793b7bd1893a4824e8d5547",
+    "semantic_hash": "53a19e50b793b7bd1893a4824e8d5547"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/model/Units.java": {
+    "mtime": 1787634855.9913633,
+    "seen": 1787674824.316375,
+    "ast_hash": "639f564117e52266f1bfaca68dea4f14",
+    "semantic_hash": "639f564117e52266f1bfaca68dea4f14"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/port/CustomerPatternRepository.java": {
+    "mtime": 1787634983.9745688,
+    "seen": 1787674824.316376,
+    "ast_hash": "fd60bbe123e7a46c24a8156b5ddd4725",
+    "semantic_hash": "fd60bbe123e7a46c24a8156b5ddd4725"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/port/DomainEventPublisher.java": {
+    "mtime": 1787634983.9827428,
+    "seen": 1787674824.3163772,
+    "ast_hash": "e705f40f360185d20817b1fbb0668622",
+    "semantic_hash": "e705f40f360185d20817b1fbb0668622"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/port/OrderLedgerRepository.java": {
+    "mtime": 1787634983.9788218,
+    "seen": 1787674824.316378,
+    "ast_hash": "0a5b1eca0f792d19587060a443e593e2",
+    "semantic_hash": "0a5b1eca0f792d19587060a443e593e2"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/main/java/dev/joaolaureano/trainingkafka/analytics/domain/port/ProductSalesRepository.java": {
+    "mtime": 1787634983.96961,
+    "seen": 1787674824.3163788,
+    "ast_hash": "610978ba00d42426d0a87ad7e932b735",
+    "semantic_hash": "610978ba00d42426d0a87ad7e932b735"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/test/java/dev/joaolaureano/trainingkafka/analytics/domain/model/CustomerOrderPatternTest.java": {
+    "mtime": 1787635035.8813398,
+    "seen": 1787674824.3163798,
+    "ast_hash": "45e7982f08cf56ecd2a0932e0ed881de",
+    "semantic_hash": "45e7982f08cf56ecd2a0932e0ed881de"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/test/java/dev/joaolaureano/trainingkafka/analytics/domain/model/ProductSalesRecordTest.java": {
+    "mtime": 1787635068.5444176,
+    "seen": 1787674824.3163798,
+    "ast_hash": "3f858c0d9f9c4a9e4e4124a32a93f418",
+    "semantic_hash": "3f858c0d9f9c4a9e4e4124a32a93f418"
+  },
+  "metrics-consumer/metrics-consumer-domain/src/test/java/dev/joaolaureano/trainingkafka/analytics/domain/model/RevenueWindowTest.java": {
+    "mtime": 1787635068.5481992,
+    "seen": 1787674824.316382,
+    "ast_hash": "a7066fbe6fac7c1550d886838b3c40c4",
+    "semantic_hash": "a7066fbe6fac7c1550d886838b3c40c4"
+  },
+  "metrics-consumer/pom.xml": {
+    "mtime": 1787634827.5053477,
+    "seen": 1787674824.316382,
+    "ast_hash": "69619569d6772d5659bbbd83481d65d2",
+    "semantic_hash": "69619569d6772d5659bbbd83481d65d2"
+  },
+  "order-service/order-service-adapters/pom.xml": {
+    "mtime": 1787634589.9950662,
+    "seen": 1787674824.316383,
+    "ast_hash": "cba9ffdaa96ae7ff48e9ffb8fadb3538",
+    "semantic_hash": "cba9ffdaa96ae7ff48e9ffb8fadb3538"
+  },
+  "order-service/order-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/orders/adapters/OrderServiceApplication.java": {
+    "mtime": 1787634113.9824429,
+    "seen": 1787674824.316384,
+    "ast_hash": "60712f307597a3649d4d8eb4865009a8",
+    "semantic_hash": "60712f307597a3649d4d8eb4865009a8"
+  },
+  "order-service/order-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/orders/adapters/config/KafkaTopicsConfig.java": {
+    "mtime": 1787634191.4149883,
+    "seen": 1787674824.316385,
+    "ast_hash": "e19c4cc18f55cbb9edad5bfc6ceedf66",
+    "semantic_hash": "e19c4cc18f55cbb9edad5bfc6ceedf66"
+  },
+  "order-service/order-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/orders/adapters/config/OrderServiceWiring.java": {
+    "mtime": 1787634191.4105163,
+    "seen": 1787674824.316386,
+    "ast_hash": "56fb94d3814d22ae262405847cdb6107",
+    "semantic_hash": "56fb94d3814d22ae262405847cdb6107"
+  },
+  "order-service/order-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/orders/adapters/messaging/ApplicationLogMessage.java": {
+    "mtime": 1787634170.2009668,
+    "seen": 1787674824.316386,
+    "ast_hash": "3fc9c592d70d08060abd027dec6f87ad",
+    "semantic_hash": "3fc9c592d70d08060abd027dec6f87ad"
+  },
+  "order-service/order-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/orders/adapters/messaging/KafkaActivityLogPublisher.java": {
+    "mtime": 1787634170.2046769,
+    "seen": 1787674824.3163872,
+    "ast_hash": "34dee3e039e57a7279c74886c8aad855",
+    "semantic_hash": "34dee3e039e57a7279c74886c8aad855"
+  },
+  "order-service/order-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/orders/adapters/messaging/KafkaOrderEventPublisher.java": {
+    "mtime": 1787634154.4592745,
+    "seen": 1787674824.3163881,
+    "ast_hash": "eda637689679b7dbcdbf527820668916",
+    "semantic_hash": "eda637689679b7dbcdbf527820668916"
+  },
+  "order-service/order-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/orders/adapters/messaging/OrderPlacedMessage.java": {
+    "mtime": 1787634154.4554484,
+    "seen": 1787674824.316389,
+    "ast_hash": "51f9231f3202a40c265e3e34ea41ad7d",
+    "semantic_hash": "51f9231f3202a40c265e3e34ea41ad7d"
+  },
+  "order-service/order-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/orders/adapters/messaging/Topics.java": {
+    "mtime": 1787634154.4514163,
+    "seen": 1787674824.3163898,
+    "ast_hash": "0656542ed922167ad2f9e37eb4c9c0be",
+    "semantic_hash": "0656542ed922167ad2f9e37eb4c9c0be"
+  },
+  "order-service/order-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/orders/adapters/web/ApiError.java": {
+    "mtime": 1787634113.9919367,
+    "seen": 1787674824.316391,
+    "ast_hash": "44a0d3f5f8956e0beab06923e44a3ff7",
+    "semantic_hash": "44a0d3f5f8956e0beab06923e44a3ff7"
+  },
+  "order-service/order-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/orders/adapters/web/ApiExceptionHandler.java": {
+    "mtime": 1787634589.9519331,
+    "seen": 1787674824.316391,
+    "ast_hash": "4b202acbdb4e3f248f13e557674a604a",
+    "semantic_hash": "4b202acbdb4e3f248f13e557674a604a"
+  },
+  "order-service/order-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/orders/adapters/web/OrderController.java": {
+    "mtime": 1787634576.0096524,
+    "seen": 1787674824.316392,
+    "ast_hash": "51a6a5065e74aec7d81669fa32f9827a",
+    "semantic_hash": "51a6a5065e74aec7d81669fa32f9827a"
+  },
+  "order-service/order-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/orders/adapters/web/PlaceOrderRequest.java": {
+    "mtime": 1787634560.250218,
+    "seen": 1787674824.316393,
+    "ast_hash": "309c17224f408d8d083ed71e28b36d06",
+    "semantic_hash": "309c17224f408d8d083ed71e28b36d06"
+  },
+  "order-service/order-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/orders/adapters/web/PlaceOrderResponse.java": {
+    "mtime": 1787634113.988973,
+    "seen": 1787674824.316394,
+    "ast_hash": "b4f2950f17472b5398571e71b2ae3b34",
+    "semantic_hash": "b4f2950f17472b5398571e71b2ae3b34"
+  },
+  "order-service/order-service-application/pom.xml": {
+    "mtime": 1787633807.4979568,
+    "seen": 1787674824.316395,
+    "ast_hash": "93367b38aedd763532db2a44699126e3",
+    "semantic_hash": "93367b38aedd763532db2a44699126e3"
+  },
+  "order-service/order-service-application/src/main/java/dev/joaolaureano/trainingkafka/orders/application/PlaceOrderCommand.java": {
+    "mtime": 1787634576.009495,
+    "seen": 1787674824.316395,
+    "ast_hash": "995049a75e18e139f70bded9f5365f7e",
+    "semantic_hash": "995049a75e18e139f70bded9f5365f7e"
+  },
+  "order-service/order-service-application/src/main/java/dev/joaolaureano/trainingkafka/orders/application/PlaceOrderService.java": {
+    "mtime": 1787634549.3504407,
+    "seen": 1787674824.316396,
+    "ast_hash": "1f74158e2bb7021e6678142c245cdc83",
+    "semantic_hash": "1f74158e2bb7021e6678142c245cdc83"
+  },
+  "order-service/order-service-application/src/main/java/dev/joaolaureano/trainingkafka/orders/application/PlaceOrderUseCase.java": {
+    "mtime": 1787633997.66574,
+    "seen": 1787674824.316397,
+    "ast_hash": "33b0e248bedf5dc78ed48fdb44857994",
+    "semantic_hash": "33b0e248bedf5dc78ed48fdb44857994"
+  },
+  "order-service/order-service-application/src/main/java/dev/joaolaureano/trainingkafka/orders/application/port/ActivityLog.java": {
+    "mtime": 1787633976.3343685,
+    "seen": 1787674824.3163981,
+    "ast_hash": "c5a64a8f25616a3bc0c2dd2432622bad",
+    "semantic_hash": "c5a64a8f25616a3bc0c2dd2432622bad"
+  },
+  "order-service/order-service-application/src/main/java/dev/joaolaureano/trainingkafka/orders/application/port/ActivityLogPublisher.java": {
+    "mtime": 1787633976.3381221,
+    "seen": 1787674824.316399,
+    "ast_hash": "48782169c8012bcd9dbd0586cc4c327e",
+    "semantic_hash": "48782169c8012bcd9dbd0586cc4c327e"
+  },
+  "order-service/order-service-application/src/main/java/dev/joaolaureano/trainingkafka/orders/application/port/LogLevel.java": {
+    "mtime": 1787633976.3299775,
+    "seen": 1787674824.3164,
+    "ast_hash": "015eeeea861f409d75e3b85dff66638b",
+    "semantic_hash": "015eeeea861f409d75e3b85dff66638b"
+  },
+  "order-service/order-service-application/src/test/java/dev/joaolaureano/trainingkafka/orders/application/PlaceOrderServiceTest.java": {
+    "mtime": 1787634621.5470371,
+    "seen": 1787674824.3164,
+    "ast_hash": "6331d1dd91389e075ca8d90b956b715e",
+    "semantic_hash": "6331d1dd91389e075ca8d90b956b715e"
+  },
+  "order-service/order-service-domain/pom.xml": {
+    "mtime": 1787633954.4157853,
+    "seen": 1787674824.316401,
+    "ast_hash": "7efa766b38c80edcf76ad7c4a5f79164",
+    "semantic_hash": "7efa766b38c80edcf76ad7c4a5f79164"
+  },
+  "order-service/order-service-domain/src/main/java/dev/joaolaureano/trainingkafka/orders/domain/event/DomainEvent.java": {
+    "mtime": 1787633843.5253263,
+    "seen": 1787674824.316402,
+    "ast_hash": "54d5384db8c99729347aec91dd623f28",
+    "semantic_hash": "54d5384db8c99729347aec91dd623f28"
+  },
+  "order-service/order-service-domain/src/main/java/dev/joaolaureano/trainingkafka/orders/domain/event/OrderPlaced.java": {
+    "mtime": 1787633843.5290298,
+    "seen": 1787674824.316403,
+    "ast_hash": "ae70d810157d4e4318f7793898df79f5",
+    "semantic_hash": "ae70d810157d4e4318f7793898df79f5"
+  },
+  "order-service/order-service-domain/src/main/java/dev/joaolaureano/trainingkafka/orders/domain/model/CustomerId.java": {
+    "mtime": 1787633818.73464,
+    "seen": 1787674824.3164039,
+    "ast_hash": "022feadbba252de00b4446bc885d5087",
+    "semantic_hash": "022feadbba252de00b4446bc885d5087"
+  },
+  "order-service/order-service-domain/src/main/java/dev/joaolaureano/trainingkafka/orders/domain/model/InvalidOrderException.java": {
+    "mtime": 1787634521.1456738,
+    "seen": 1787674824.3164039,
+    "ast_hash": "c29751b159172d4eb8854a4c0535bed5",
+    "semantic_hash": "c29751b159172d4eb8854a4c0535bed5"
+  },
+  "order-service/order-service-domain/src/main/java/dev/joaolaureano/trainingkafka/orders/domain/model/Money.java": {
+    "mtime": 1787633831.1738274,
+    "seen": 1787674824.316405,
+    "ast_hash": "90050d2b87e759d23564401f16ac7958",
+    "semantic_hash": "90050d2b87e759d23564401f16ac7958"
+  },
+  "order-service/order-service-domain/src/main/java/dev/joaolaureano/trainingkafka/orders/domain/model/Order.java": {
+    "mtime": 1787634576.00901,
+    "seen": 1787674824.316406,
+    "ast_hash": "614a8c7f986ee672086536a4cfe678c2",
+    "semantic_hash": "614a8c7f986ee672086536a4cfe678c2"
+  },
+  "order-service/order-service-domain/src/main/java/dev/joaolaureano/trainingkafka/orders/domain/model/OrderId.java": {
+    "mtime": 1787633818.7415943,
+    "seen": 1787674824.316407,
+    "ast_hash": "9108505707da54987549602bca0e38dc",
+    "semantic_hash": "9108505707da54987549602bca0e38dc"
+  },
+  "order-service/order-service-domain/src/main/java/dev/joaolaureano/trainingkafka/orders/domain/model/ProductId.java": {
+    "mtime": 1787633818.738031,
+    "seen": 1787674824.3164082,
+    "ast_hash": "aecb92ff6755670f634c7b466b99e0d1",
+    "semantic_hash": "aecb92ff6755670f634c7b466b99e0d1"
+  },
+  "order-service/order-service-domain/src/main/java/dev/joaolaureano/trainingkafka/orders/domain/model/Quantity.java": {
+    "mtime": 1787633831.1698406,
+    "seen": 1787674824.3164082,
+    "ast_hash": "69ca037fb2c4337546dafb00ea27dff0",
+    "semantic_hash": "69ca037fb2c4337546dafb00ea27dff0"
+  },
+  "order-service/order-service-domain/src/main/java/dev/joaolaureano/trainingkafka/orders/domain/model/Violation.java": {
+    "mtime": 1787634521.1414523,
+    "seen": 1787674824.316409,
+    "ast_hash": "49a0e1768558a916f4443338b90c1b4b",
+    "semantic_hash": "49a0e1768558a916f4443338b90c1b4b"
+  },
+  "order-service/order-service-domain/src/main/java/dev/joaolaureano/trainingkafka/orders/domain/model/Violations.java": {
+    "mtime": 1787634521.1492667,
+    "seen": 1787674824.31641,
+    "ast_hash": "626fd0b23f310eb479c32cc5261a53c2",
+    "semantic_hash": "626fd0b23f310eb479c32cc5261a53c2"
+  },
+  "order-service/order-service-domain/src/main/java/dev/joaolaureano/trainingkafka/orders/domain/port/OrderEventPublisher.java": {
+    "mtime": 1787633843.532204,
+    "seen": 1787674824.3164108,
+    "ast_hash": "f46a9f7c23f6425071e15270189ebc75",
+    "semantic_hash": "f46a9f7c23f6425071e15270189ebc75"
+  },
+  "order-service/order-service-domain/src/test/java/dev/joaolaureano/trainingkafka/orders/domain/model/OrderTest.java": {
+    "mtime": 1787634606.133269,
+    "seen": 1787674824.316412,
+    "ast_hash": "091091d494d0da731419048ff4fd446a",
+    "semantic_hash": "091091d494d0da731419048ff4fd446a"
+  },
+  "order-service/pom.xml": {
+    "mtime": 1787633771.9899495,
+    "seen": 1787674824.316412,
+    "ast_hash": "26bcf3985b13faf63a17c95703a2d5ce",
+    "semantic_hash": "26bcf3985b13faf63a17c95703a2d5ce"
+  },
+  "pom.xml": {
+    "mtime": 1787636036.4510427,
+    "seen": 1787674824.316413,
+    "ast_hash": "b051b95a8a76fb21533ae1b3eafd503c",
+    "semantic_hash": "b051b95a8a76fb21533ae1b3eafd503c"
+  },
+  "README.md": {
+    "mtime": 1787637176.1484995,
+    "seen": 1787674824.3164139,
+    "ast_hash": "2fb6c74ab0a32fa6a2392621718cc4bb",
+    "semantic_hash": "2fb6c74ab0a32fa6a2392621718cc4bb"
+  },
+  "docker-compose.yml": {
+    "mtime": 1787633494.694486,
+    "seen": 1787674824.316415,
+    "ast_hash": "a371360740ad45d6f3029d490fc1ad05",
+    "semantic_hash": "a371360740ad45d6f3029d490fc1ad05"
+  },
+  "log-aggregator/log-aggregator-adapters/src/main/resources/application.yml": {
+    "mtime": 1787928845.0224755,
+    "seen": 1788210920.391683,
+    "ast_hash": "270191f02667c1d382d4b2320bcc01a2",
+    "semantic_hash": ""
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/resources/application.yml": {
+    "mtime": 1787928845.0241692,
+    "seen": 1788210920.391684,
+    "ast_hash": "b80ac7cfe7769830e2257e5b408f2c22",
+    "semantic_hash": ""
+  },
+  "order-service/order-service-adapters/src/main/resources/application.yml": {
+    "mtime": 1787634204.52133,
+    "seen": 1787674824.316417,
+    "ast_hash": "ae0f1ab58ad5779e2488059540b4216b",
+    "semantic_hash": "ae0f1ab58ad5779e2488059540b4216b"
+  },
+  "log-aggregator/log-aggregator-adapters/src/main/java/dev/joaolaureano/trainingkafka/logs/adapters/config/DeadLetterProperties.java": {
+    "mtime": 1787928845.0170434,
+    "seen": 1788210920.391551,
+    "ast_hash": "2a836ee71cc46ade5c1d17d7d3728db9",
+    "semantic_hash": ""
+  },
+  "log-aggregator/log-aggregator-adapters/src/main/java/dev/joaolaureano/trainingkafka/logs/adapters/config/KafkaErrorHandlingConfig.java": {
+    "mtime": 1787928845.0196867,
+    "seen": 1788210920.391552,
+    "ast_hash": "d20119b8a524771580c30861f4fe74e1",
+    "semantic_hash": ""
+  },
+  "log-aggregator/log-aggregator-adapters/src/main/java/dev/joaolaureano/trainingkafka/logs/adapters/messaging/Topics.java": {
+    "mtime": 1787928845.0221477,
+    "seen": 1788210920.391558,
+    "ast_hash": "b81f677b4db6f1de99a19e61de5b7171",
+    "semantic_hash": ""
+  },
+  "log-aggregator/log-aggregator-adapters/src/test/java/dev/joaolaureano/trainingkafka/logs/adapters/config/KafkaErrorHandlingConfigTest.java": {
+    "mtime": 1787928845.0227945,
+    "seen": 1788210920.3915641,
+    "ast_hash": "1bf409fbed2ab73b4b62ab1f122d97cd",
+    "semantic_hash": ""
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/config/DeadLetterProperties.java": {
+    "mtime": 1787928845.0230935,
+    "seen": 1788210920.391583,
+    "ast_hash": "fd2f1366619fceb7423f56960240de1b",
+    "semantic_hash": ""
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/config/KafkaErrorHandlingConfig.java": {
+    "mtime": 1787928845.0234709,
+    "seen": 1788210920.391584,
+    "ast_hash": "bdda968c5270d3a5ffdabc9aca226f59",
+    "semantic_hash": ""
+  },
+  "metrics-consumer/metrics-consumer-adapters/src/test/java/dev/joaolaureano/trainingkafka/analytics/adapters/config/KafkaErrorHandlingConfigTest.java": {
+    "mtime": 1787928845.0245242,
+    "seen": 1788210920.391606,
+    "ast_hash": "47fcbdd3a7fec81696f1bf87a3f592c6",
+    "semantic_hash": ""
+  },
+  ".serena/project.yml": {
+    "mtime": 1788210925.3391263,
+    "seen": 1788210935.006037,
+    "ast_hash": "35d60213d111268c562bbf6a9bd32b8e",
+    "semantic_hash": ""
+  }
+}

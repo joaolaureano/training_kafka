@@ -1,4 +1,4 @@
-package dev.joaolaureano.trainingkafka.analytics.adapters.config;
+package dev.joaolaureano.trainingkafka.analytics.bootstrap.config;
 
 import dev.joaolaureano.trainingkafka.analytics.adapters.persistence.duckdb.DuckDbCustomerPatternRepository;
 import dev.joaolaureano.trainingkafka.analytics.adapters.persistence.duckdb.DuckDbOrderLedgerRepository;

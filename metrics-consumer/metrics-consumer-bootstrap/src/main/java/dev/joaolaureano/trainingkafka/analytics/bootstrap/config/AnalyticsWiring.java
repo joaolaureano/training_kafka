@@ -1,8 +1,13 @@
-package dev.joaolaureano.trainingkafka.analytics.adapters.config;
+package dev.joaolaureano.trainingkafka.analytics.bootstrap.config;
 
+import dev.joaolaureano.trainingkafka.analytics.adapters.config.SuspicionProperties;
 import dev.joaolaureano.trainingkafka.analytics.adapters.messaging.KafkaDomainEventPublisher;
+import dev.joaolaureano.trainingkafka.analytics.adapters.messaging.OrderPlacedPort;
+import dev.joaolaureano.trainingkafka.analytics.adapters.web.MetricsQueryPort;
 import dev.joaolaureano.trainingkafka.analytics.application.MetricsQueryService;
 import dev.joaolaureano.trainingkafka.analytics.application.OrderPlacedHandler;
+import dev.joaolaureano.trainingkafka.analytics.bootstrap.facade.MetricsQueryFacade;
+import dev.joaolaureano.trainingkafka.analytics.bootstrap.facade.OrderPlacedFacade;
 import dev.joaolaureano.trainingkafka.analytics.domain.model.SuspicionPolicy;
 import dev.joaolaureano.trainingkafka.analytics.domain.port.CustomerPatternRepository;
 import dev.joaolaureano.trainingkafka.analytics.domain.port.DomainEventPublisher;
@@ -59,5 +64,18 @@ public class AnalyticsWiring {
     public MetricsQueryService metricsQueryService(ProductSalesRepository productSales,
                                                    OrderLedgerRepository ledger) {
         return new MetricsQueryService(productSales, ledger);
+    }
+
+    // As facades: cada adapter declarou a interface de que precisa, e é aqui —
+    // no único módulo que enxerga os dois lados — que ela ganha implementação.
+
+    @Bean
+    public OrderPlacedPort orderPlacedPort(OrderPlacedHandler orderPlacedHandler) {
+        return new OrderPlacedFacade(orderPlacedHandler);
+    }
+
+    @Bean
+    public MetricsQueryPort metricsQueryPort(MetricsQueryService metricsQueryService) {
+        return new MetricsQueryFacade(metricsQueryService);
     }
 }

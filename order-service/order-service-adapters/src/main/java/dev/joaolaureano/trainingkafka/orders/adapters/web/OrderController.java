@@ -1,7 +1,5 @@
 package dev.joaolaureano.trainingkafka.orders.adapters.web;
 
-import dev.joaolaureano.trainingkafka.orders.application.PlaceOrderCommand;
-import dev.joaolaureano.trainingkafka.orders.application.PlaceOrderUseCase;
 import dev.joaolaureano.trainingkafka.orders.domain.model.OrderId;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,16 +11,17 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Adapter de entrada HTTP.
  *
- * Traduz requisição em comando, delega, traduz resultado em resposta. Não decide
- * nada — se aparecer regra de negócio aqui, ela vazou de dentro.
+ * Recebe a requisição, delega pelo Port que ele mesmo declara
+ * ({@link PlaceOrderPort}) e traduz o resultado em resposta. Não decide nada —
+ * se aparecer regra de negócio aqui, ela vazou de dentro.
  */
 @RestController
 @RequestMapping("/orders")
 public class OrderController {
 
-    private final PlaceOrderUseCase placeOrder;
+    private final PlaceOrderPort placeOrder;
 
-    public OrderController(PlaceOrderUseCase placeOrder) {
+    public OrderController(PlaceOrderPort placeOrder) {
         this.placeOrder = placeOrder;
     }
 
@@ -34,11 +33,7 @@ public class OrderController {
      */
     @PostMapping
     public ResponseEntity<PlaceOrderResponse> place(@RequestBody PlaceOrderRequest request) {
-        OrderId orderId = placeOrder.handle(new PlaceOrderCommand(
-                request.customerId(),
-                request.product(),
-                request.quantity(),
-                request.amount()));
+        OrderId orderId = placeOrder.place(request);
 
         return ResponseEntity.status(HttpStatus.ACCEPTED)
                 .body(PlaceOrderResponse.accepted(orderId.toString()));

@@ -18,5 +18,6 @@
     <module>order-service-domain</module>
     <module>order-service-application</module>
     <module>order-service-adapters</module>
+    <module>order-service-bootstrap</module>
   </modules>
 </project>

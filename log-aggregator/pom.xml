@@ -15,5 +15,6 @@
     <module>log-aggregator-domain</module>
     <module>log-aggregator-application</module>
     <module>log-aggregator-adapters</module>
+    <module>log-aggregator-bootstrap</module>
   </modules>
 </project>

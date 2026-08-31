@@ -17,7 +17,7 @@
   <dependencies>
     <dependency>
       <groupId>dev.joaolaureano.trainingkafka</groupId>
-      <artifactId>order-service-application</artifactId>
+      <artifactId>order-service-domain</artifactId>
       <version>${project.version}</version>
     </dependency>
 
@@ -43,12 +43,38 @@
 
   <build>
     <plugins>
+      <!--
+        Este módulo NÃO pode enxergar a camada de aplicação.
+
+        Os adapters de entrada declaram, no próprio pacote, a interface de que
+        precisam; quem a implementa é uma facade montada no módulo -bootstrap.
+        Se alguém reintroduzir a dependência para encurtar caminho, o build
+        quebra aqui — a separação é do compilador, não da disciplina.
+      -->
       <plugin>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-maven-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
         <executions>
           <execution>
-            <goals><goal>repackage</goal></goals>
+            <id>enforce-adapters-independence</id>
+            <phase>validate</phase>
+            <goals><goal>enforce</goal></goals>
+            <configuration>
+              <rules>
+                <bannedDependencies>
+                  <searchTransitive>true</searchTransitive>
+                  <excludes>
+                    <exclude>dev.joaolaureano.trainingkafka:order-service-application</exclude>
+                  </excludes>
+                  <message>
+                    O módulo -adapters não pode depender do módulo -application.
+                    Declare aqui a interface de que o adapter precisa e implemente-a
+                    como facade no módulo -bootstrap, que é a raiz de composição.
+                  </message>
+                </bannedDependencies>
+              </rules>
+              <fail>true</fail>
+            </configuration>
           </execution>
         </executions>
       </plugin>

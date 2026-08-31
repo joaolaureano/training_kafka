@@ -15,5 +15,6 @@
     <module>metrics-consumer-domain</module>
     <module>metrics-consumer-application</module>
     <module>metrics-consumer-adapters</module>
+    <module>metrics-consumer-bootstrap</module>
   </modules>
 </project>

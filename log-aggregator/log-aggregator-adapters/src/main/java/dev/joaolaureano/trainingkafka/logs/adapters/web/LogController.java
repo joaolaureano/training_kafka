@@ -1,6 +1,5 @@
 package dev.joaolaureano.trainingkafka.logs.adapters.web;
 
-import dev.joaolaureano.trainingkafka.logs.application.LogQueryService;
 import dev.joaolaureano.trainingkafka.logs.domain.model.ApplicationName;
 import dev.joaolaureano.trainingkafka.logs.domain.model.LogEntry;
 import dev.joaolaureano.trainingkafka.logs.domain.model.LogFilter;
@@ -24,9 +23,9 @@ import java.util.Map;
 @RequestMapping("/logs")
 public class LogController {
 
-    private final LogQueryService queries;
+    private final LogQueryPort queries;
 
-    public LogController(LogQueryService queries) {
+    public LogController(LogQueryPort queries) {
         this.queries = queries;
     }
 

@@ -59,10 +59,16 @@ public class KafkaErrorHandlingConfig {
      * {@link DelegatingByTypeSerializer} resolve isso escolhendo o serializador
      * pelo tipo real do que está sendo reenviado, preservando o payload original
      * byte a byte quando é isso que temos em mãos.
+     *
+     * O tipo declarado é {@link KafkaOperations}, e não {@code KafkaTemplate}, de
+     * propósito: a autoconfiguração do Spring Boot só cria o KafkaTemplate padrão
+     * na ausência de QUALQUER bean desse tipo. Declarar este como KafkaTemplate
+     * fazia a autoconfiguração recuar, e o template de eventos de domínio
+     * simplesmente deixava de existir.
      */
     @Bean
     @ConditionalOnProperty(prefix = "kafka.dlq", name = "enabled", havingValue = "true", matchIfMissing = true)
-    public KafkaTemplate<Object, Object> deadLetterKafkaTemplate(KafkaProperties kafkaProperties) {
+    public KafkaOperations<Object, Object> deadLetterKafkaTemplate(KafkaProperties kafkaProperties) {
         Map<String, Object> producerProperties = Map.of(
                 ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.getBootstrapServers(),
                 ProducerConfig.ACKS_CONFIG, "all");

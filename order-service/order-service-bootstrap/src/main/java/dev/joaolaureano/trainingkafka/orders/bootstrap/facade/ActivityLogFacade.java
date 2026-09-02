@@ -26,7 +26,7 @@ public class ActivityLogFacade implements ActivityLogPublisher {
     public void publish(ActivityLog log) {
         publisher.publish(
                 log.level().name(),
-                log.message(),
+                log.action(),
                 log.context(),
                 log.occurredAt());
     }

@@ -1,0 +1,67 @@
+spring:
+  application:
+    name: audit-service
+
+  # Sem profile explícito, imprime no console: dá para ver o fluxo funcionando
+  # sem criar arquivo nenhum.
+  profiles:
+    default: stdout
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9094}
+    consumer:
+      group-id: audit-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.value.default.type: dev.joaolaureano.trainingkafka.audit.adapters.messaging.AuditEventMessage
+        spring.json.use.type.headers: false
+        spring.json.trusted.packages: dev.joaolaureano.trainingkafka.audit.adapters.messaging
+    listener:
+      concurrency: 1
+
+# Dead Letter Queue.
+#
+# Falha transitória (banco fora do ar, rede piscando) é retentada com backoff
+# exponencial. Falha permanente — payload que a Anticorruption Layer recusa —
+# vai direto para <tópico>-dlt, sem gastar tentativa, com os cabeçalhos de
+# diagnóstico anexados (exceção, causa, tópico/partição/offset de origem).
+#
+# enabled: false volta ao comportamento antigo (registrar e descartar).
+kafka:
+  dlq:
+    enabled: true
+    topic-suffix: -dlt
+    # O broker está com auto-criação de tópicos desligada; sem isto a
+    # republicação falharia com UNKNOWN_TOPIC_OR_PARTITION.
+    create-topics: true
+    partitions: 3
+    replicas: 1
+    retry:
+      attempts: 2
+      initial-interval: 1s
+      multiplier: 2.0
+      max-interval: 10s
+
+audit:
+  jsonl:
+    path: data/audit.jsonl
+  duckdb:
+    # Arquivo próprio: o DuckDB só aceita um processo escritor por arquivo.
+    path: data/audit.duckdb
+
+server:
+  port: 8082
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+
+logging:
+  level:
+    root: INFO
+    dev.joaolaureano.trainingkafka: DEBUG

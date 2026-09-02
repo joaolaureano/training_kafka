@@ -3,7 +3,7 @@ package dev.joaolaureano.trainingkafka.analytics.adapters.messaging;
 public final class Topics {
 
     public static final String ORDERS = "orders";
-    public static final String APPLICATION_LOGS = "application-logs";
+    public static final String AUDIT_EVENTS = "audit-events";
 
     private Topics() {
     }

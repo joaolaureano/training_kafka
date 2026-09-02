@@ -209,7 +209,7 @@ export function handleSummary(data) {
     '',
     '  Confira o efeito no App B e no App C:',
     '    curl -s localhost:8081/metrics/top-products?limit=5',
-    '    curl -s "localhost:8082/logs?level=WARN&app=metrics-consumer&limit=10"',
+    '    curl -s "localhost:8082/audit-events?level=WARN&app=metrics-consumer&limit=10"',
     '',
   ].join('\n');
 

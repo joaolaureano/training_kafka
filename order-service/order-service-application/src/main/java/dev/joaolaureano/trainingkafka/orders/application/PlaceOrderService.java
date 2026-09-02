@@ -50,9 +50,8 @@ public class PlaceOrderService implements PlaceOrderUseCase {
 
             order.pullDomainEvents().forEach(eventPublisher::publish);
 
-            activityLog.publish(ActivityLog.info("order accepted", ActivityLog.context(
+                activityLog.publish(ActivityLog.info("order.accepted", ActivityLog.context(
                     "orderId", order.id().toString(),
-                    "customerId", order.customerId().toString(),
                     "product", order.productId().toString(),
                     "quantity", order.quantity().toString(),
                     "amount", order.amount().toString()), now));
@@ -62,10 +61,9 @@ public class PlaceOrderService implements PlaceOrderUseCase {
         } catch (InvalidOrderException rejection) {
             // O pedido rejeitado também é um fato observável — e é justamente o que
             // o App C vai destacar quando o k6 mandar payload inválido de propósito.
-            activityLog.publish(ActivityLog.warn("order rejected", ActivityLog.context(
+                activityLog.publish(ActivityLog.warn("order.rejected", ActivityLog.context(
                     "violations", rejection.violations().stream()
                             .map(Violation::toString).collect(Collectors.joining("; ")),
-                    "customerId", String.valueOf(command.customerId()),
                     "product", String.valueOf(command.product())), now));
             throw rejection;
         }

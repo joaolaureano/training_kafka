@@ -2,7 +2,7 @@ package dev.joaolaureano.trainingkafka.orders.application;
 
 import dev.joaolaureano.trainingkafka.orders.application.port.ActivityLog;
 import dev.joaolaureano.trainingkafka.orders.application.port.ActivityLogPublisher;
-import dev.joaolaureano.trainingkafka.orders.application.port.LogLevel;
+import dev.joaolaureano.trainingkafka.orders.application.port.AuditLevel;
 import dev.joaolaureano.trainingkafka.orders.domain.event.DomainEvent;
 import dev.joaolaureano.trainingkafka.orders.domain.event.OrderPlaced;
 import dev.joaolaureano.trainingkafka.orders.domain.model.InvalidOrderException;
@@ -61,9 +61,9 @@ class PlaceOrderServiceTest {
         service.handle(new PlaceOrderCommand("cust-1", "Teclado", 2, new BigDecimal("199.90")));
 
         assertThat(logs.published).singleElement().satisfies(log -> {
-            assertThat(log.level()).isEqualTo(LogLevel.INFO);
-            assertThat(log.message()).isEqualTo("order accepted");
-            assertThat(log.context()).containsEntry("customerId", "cust-1")
+            assertThat(log.level()).isEqualTo(AuditLevel.INFO);
+            assertThat(log.action()).isEqualTo("order.accepted");
+            assertThat(log.context()).doesNotContainKey("customerId")
                     .containsEntry("amount", "199.90")
                     .containsKey("orderId");
         });
@@ -77,9 +77,9 @@ class PlaceOrderServiceTest {
                 .isInstanceOf(InvalidOrderException.class);
 
         assertThat(logs.published).singleElement().satisfies(log -> {
-            assertThat(log.level()).isEqualTo(LogLevel.WARN);
-            assertThat(log.message()).isEqualTo("order rejected");
-            assertThat(log.context()).containsEntry("customerId", "cust-1");
+            assertThat(log.level()).isEqualTo(AuditLevel.WARN);
+            assertThat(log.action()).isEqualTo("order.rejected");
+            assertThat(log.context()).doesNotContainKey("customerId");
             assertThat(log.context().get("violations")).contains("quantity");
         });
     }

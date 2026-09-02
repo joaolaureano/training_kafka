@@ -11,8 +11,8 @@ import java.util.Map;
  * questão de deployment, não de caso de uso — quem carimba isso é o adapter.
  */
 public record ActivityLog(
-        LogLevel level,
-        String message,
+        AuditLevel level,
+        String action,
         Map<String, String> context,
         Instant occurredAt
 ) {
@@ -21,12 +21,12 @@ public record ActivityLog(
         context = Map.copyOf(context == null ? Map.of() : context);
     }
 
-    public static ActivityLog info(String message, Map<String, String> context, Instant at) {
-        return new ActivityLog(LogLevel.INFO, message, context, at);
+    public static ActivityLog info(String action, Map<String, String> context, Instant at) {
+        return new ActivityLog(AuditLevel.INFO, action, context, at);
     }
 
-    public static ActivityLog warn(String message, Map<String, String> context, Instant at) {
-        return new ActivityLog(LogLevel.WARN, message, context, at);
+    public static ActivityLog warn(String action, Map<String, String> context, Instant at) {
+        return new ActivityLog(AuditLevel.WARN, action, context, at);
     }
 
     /** Açúcar para montar o contexto sem repetir {@code new LinkedHashMap<>()} em todo lugar. */

@@ -30,7 +30,7 @@ public class KafkaTopicsConfig {
 
     @Bean
     public NewTopic applicationLogsTopic() {
-        return TopicBuilder.name(Topics.APPLICATION_LOGS)
+        return TopicBuilder.name(Topics.AUDIT_EVENTS)
                 .partitions(PARTITIONS)
                 .replicas(REPLICAS)
                 .build();

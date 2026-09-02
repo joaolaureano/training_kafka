@@ -21,7 +21,7 @@
   <modules>
     <module>order-service</module>
     <module>metrics-consumer</module>
-    <module>log-aggregator</module>
+    <module>audit-service</module>
   </modules>
 
   <properties>

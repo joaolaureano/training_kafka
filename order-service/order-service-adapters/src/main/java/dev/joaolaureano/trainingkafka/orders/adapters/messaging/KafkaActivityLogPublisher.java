@@ -27,24 +27,24 @@ public class KafkaActivityLogPublisher {
         this.applicationName = applicationName;
     }
 
-    public void publish(String level, String message, Map<String, String> context, Instant occurredAt) {
-        ApplicationLogMessage payload = new ApplicationLogMessage(
+    public void publish(String level, String action, Map<String, String> context, Instant occurredAt) {
+        AuditEventMessage payload = new AuditEventMessage(
                 level,
                 occurredAt.toString(),
                 applicationName,
-                message,
+                action,
                 context);
 
         // Chave = nome da aplicação, para agrupar os logs de um mesmo serviço na
         // mesma partição e preservar a ordem cronológica dentro dele.
-        kafkaTemplate.send(Topics.APPLICATION_LOGS, applicationName, payload)
+        kafkaTemplate.send(Topics.AUDIT_EVENTS, applicationName, payload)
                 .whenComplete((result, failure) -> {
                     // Log é telemetria: se o envio falhar, registramos localmente e
                     // seguimos. Derrubar um pedido válido porque o log não foi
                     // publicado inverteria a prioridade entre o essencial e o acessório.
                     if (failure != null) {
                         log.warn("Falha ao publicar log de atividade no tópico {}: {}",
-                                Topics.APPLICATION_LOGS, failure.getMessage());
+                                Topics.AUDIT_EVENTS, failure.getMessage());
                     }
                 });
     }

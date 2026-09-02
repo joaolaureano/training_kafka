@@ -29,12 +29,12 @@ então uma `@Service` escrita ali simplesmente não compila.
            │                                        │
            ▼                                        ▼
       ┌──────────────────────────────────────────────────┐
-      │            tópico "application-logs"             │
+      │            tópico "audit-events"             │
       └───────────────────────┬──────────────────────────┘
                               ▼
                    ┌──────────────────────┐
                    │  App C               │
-                   │  log-aggregator      │
+                   │  audit-service      │
                    │  :8082               │
                    └──────────────────────┘
 ```
@@ -45,7 +45,7 @@ então uma `@Service` escrita ali simplesmente não compila.
 |---|---|---|---|
 | **A** | `order-service` | 8080 | Recebe pedidos por HTTP, valida no domínio, publica em `orders` (particionado por `customerId`) e registra logs estruturados |
 | **B** | `metrics-consumer` | 8081 | Consome `orders`, acumula métricas de venda e detecta padrões suspeitos de pedido |
-| **C** | `log-aggregator` | 8082 | Consome `application-logs`, persiste e responde consultas por nível/app/período |
+| **C** | `audit-service` | 8082 | Consome `audit-events`, persiste e responde consultas por nível/app/período |
 
 ---
 
@@ -105,7 +105,7 @@ Cada um numa aba de terminal:
 ```bash
 java -jar order-service/order-service-bootstrap/target/order-service-bootstrap-0.1.0-SNAPSHOT.jar
 java -jar metrics-consumer/metrics-consumer-bootstrap/target/metrics-consumer-bootstrap-0.1.0-SNAPSHOT.jar
-java -jar log-aggregator/log-aggregator-bootstrap/target/log-aggregator-bootstrap-0.1.0-SNAPSHOT.jar
+java -jar audit-service/audit-service-bootstrap/target/audit-service-bootstrap-0.1.0-SNAPSHOT.jar
 ```
 
 ### 4. Um pedido
@@ -118,7 +118,7 @@ curl -X POST localhost:8080/orders \
 
 ```bash
 curl -s "localhost:8081/metrics/top-products?limit=5"
-curl -s "localhost:8082/logs?level=WARN&limit=10"
+curl -s "localhost:8082/audit-events?level=WARN&limit=10"
 ```
 
 ---
@@ -135,9 +135,9 @@ java -jar .../metrics-consumer-bootstrap-0.1.0-SNAPSHOT.jar --spring.profiles.ac
 java -jar .../metrics-consumer-bootstrap-0.1.0-SNAPSHOT.jar --spring.profiles.active=duckdb
 
 # App C
-java -jar .../log-aggregator-bootstrap-0.1.0-SNAPSHOT.jar --spring.profiles.active=stdout       # default
-java -jar .../log-aggregator-bootstrap-0.1.0-SNAPSHOT.jar --spring.profiles.active=jsonl
-java -jar .../log-aggregator-bootstrap-0.1.0-SNAPSHOT.jar --spring.profiles.active=duckdb
+java -jar .../audit-service-bootstrap-0.1.0-SNAPSHOT.jar --spring.profiles.active=stdout       # default
+java -jar .../audit-service-bootstrap-0.1.0-SNAPSHOT.jar --spring.profiles.active=jsonl
+java -jar .../audit-service-bootstrap-0.1.0-SNAPSHOT.jar --spring.profiles.active=duckdb
 ```
 
 | App | Profile | Onde os dados param | Arquivo |
@@ -146,15 +146,15 @@ java -jar .../log-aggregator-bootstrap-0.1.0-SNAPSHOT.jar --spring.profiles.acti
 | B | `sqlite` | SQLite | `data/metrics.db` |
 | B | `duckdb` | DuckDB | `data/metrics.duckdb` |
 | C | `stdout` | console — **não armazena** | — |
-| C | `jsonl` | uma linha JSON por registro | `data/logs.jsonl` |
-| C | `duckdb` | DuckDB, tabela `logs` | `data/logs.duckdb` |
+| C | `jsonl` | uma linha JSON por registro | `data/audit.jsonl` |
+| C | `duckdb` | DuckDB, tabela `audit_events` | `data/audit.duckdb` |
 
-> **O adapter `stdout` não armazena nada**, então `GET /logs` sempre devolve lista vazia.
+> **O adapter `stdout` não armazena nada**, então `GET /audit-events` sempre devolve lista vazia.
 > Isso é uma limitação declarada no javadoc do Port e fixada por um teste — uma lista vazia
 > que significa "não há onde procurar" é diferente de uma que significa "nada casou".
 
 > **DuckDB aceita um único processo escritor por arquivo.** Por isso o App C usa
-> `data/logs.duckdb`, separado do App B. Apontar os dois para o mesmo arquivo com ambos
+> `data/audit.duckdb`, separado do App B. Apontar os dois para o mesmo arquivo com ambos
 > no ar falha assim:
 > ```
 > IO Error: Could not set lock on file ".../data/metrics.duckdb":
@@ -187,7 +187,7 @@ Depois da carga, o efeito é visível nas duas pontas:
 
 ```bash
 curl -s "localhost:8081/metrics/top-products?limit=5"
-curl -s "localhost:8082/logs?level=WARN&app=metrics-consumer&limit=10"
+curl -s "localhost:8082/audit-events?level=WARN&app=metrics-consumer&limit=10"
 ```
 
 ### O que a carga revelou
@@ -221,7 +221,7 @@ commit próprio e portanto `fsync`. O gargalo é a quantidade de commits, não o
 O caminho para melhorar é consumo em lote: acumular N mensagens, processar e commitar
 uma vez só. Isso muda o adapter, não o domínio — o que é justamente o ponto.
 
-**2. Distribuição desigual de partição no tópico `application-logs`.** Depois da carga:
+**2. Distribuição desigual de partição no tópico `audit-events`.** Depois da carga:
 
 ```
 partição 0:          3 mensagens
@@ -265,7 +265,7 @@ o que o módulo `*-bootstrap` existe para permitir.
 
 Um adapter de entrada precisa que alguém execute o caso de uso — mas não precisa saber
 quem. Então ele declara, no próprio pacote, a interface de que precisa:
-`PlaceOrderPort`, `LogQueryPort`, `OrderPlacedPort`. Do outro lado, a camada de aplicação
+`PlaceOrderPort`, `AuditQueryPort`, `OrderPlacedPort`. Do outro lado, a camada de aplicação
 oferece o que sabe fazer. Nenhum dos dois módulos importa o outro; quem costura os dois
 lados é uma **facade** no `*-bootstrap` — o único módulo que enxerga tudo, porque enxergar
 tudo é exatamente o trabalho dele.
@@ -313,7 +313,7 @@ Cada serviço tem sua **própria** classe para o JSON que trafega no tópico. Co
 classe entre eles os colaria pelo classpath: uma refatoração interna no App A quebraria a
 compilação do App B. O preço são seis nomes de campo repetidos; o retorno é que os bounded
 contexts evoluem sozinhos, com a tradução acontecendo numa Anticorruption Layer explícita
-(`OrderPlacedTranslator`, `LogEntryTranslator`).
+(`OrderPlacedTranslator`, `AuditEventTranslator`).
 
 Na mesma linha, `spring.json.add.type.headers=false`: com o header de tipo, o consumidor
 precisaria conhecer o nome completo da classe do produtor para desserializar.
@@ -349,7 +349,7 @@ mvn test
 140 testes. Os mais interessantes são os **de contrato**: a mesma bateria, escrita puramente
 em vocabulário de domínio, roda contra todas as implementações de cada Port —
 `{ProductSales, CustomerPattern, OrderLedger} × {inMemory, SQLite, DuckDB}` no App B e
-`LogRepository × {JSONL, DuckDB}` no App C.
+`AuditRepository × {JSONL, DuckDB}` no App C.
 
 Se algum desses testes precisasse de um `if (isSqlite)`, seria a prova de que o Port foi
 moldado por acidente em torno de uma tecnologia. Nenhum precisou.
@@ -380,11 +380,11 @@ training_kafka/
 │   ├── metrics-consumer-adapters/    Kafka, REST, 9 implementações de repositório
 │   └── metrics-consumer-bootstrap/   main, application.yml, wiring, facades
 │
-├── log-aggregator/               App C
-│   ├── log-aggregator-domain/        LogEntry, LogFilter, LogRepository
-│   ├── log-aggregator-application/   IngestLogService, LogQueryService
-│   ├── log-aggregator-adapters/      Kafka, REST, 3 implementações
-│   └── log-aggregator-bootstrap/     main, application.yml, wiring, facades
+├── audit-service/               App C
+│   ├── audit-service-domain/        AuditEvent, AuditFilter, AuditRepository
+│   ├── audit-service-application/   IngestAuditService, AuditQueryService
+│   ├── audit-service-adapters/      Kafka, REST, 3 implementações
+│   └── audit-service-bootstrap/     main, application.yml, wiring, facades
 │
 └── load-tests/                   k6 + faker, empacotado com esbuild
 ```
@@ -396,7 +396,7 @@ training_kafka/
 | `POST` | `:8080/orders` | Registra um pedido. `202` se aceito, `400` com a lista completa de violações se não |
 | `GET` | `:8081/metrics/top-products?limit=10` | Produtos mais vendidos |
 | `GET` | `:8081/metrics/revenue?hours=24&product=X` | Faturamento e ticket médio no período |
-| `GET` | `:8082/logs?level=WARN&app=X&limit=50` | Logs por severidade mínima, app e período |
+| `GET` | `:8082/audit-events?level=WARN&app=X&limit=50` | Auditoria por severidade mínima, app e período |
 | `GET` | `:808{0,1,2}/actuator/health` | Saúde de cada serviço |
 
 `POST /orders` responde **202 Accepted**, e não 201: o pedido foi publicado no tópico, mas a

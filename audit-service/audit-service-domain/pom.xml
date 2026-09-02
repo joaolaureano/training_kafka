@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>dev.joaolaureano.trainingkafka</groupId>
+    <artifactId>audit-service</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>audit-service-domain</artifactId>
+  <name>audit-service :: domain</name>
+
+  <!--
+    ZERO dependências de compilação. Nem Spring, nem Jackson, nem Kafka, nem Jakarta.
+    Só a biblioteca padrão do Java.
+
+    Isso não é disciplina: é o compilador. Uma @Service escrita aqui não compila,
+    porque a anotação não existe no classpath deste módulo.
+  -->
+  <dependencies>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!--
+        Rede de segurança para o futuro: se alguém (inclusive eu, daqui a três meses)
+        acrescentar uma dependência de infraestrutura neste POM, o build quebra com
+        uma mensagem explicando o porquê — em vez de o acoplamento passar despercebido.
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>enforce-domain-purity</id>
+            <phase>validate</phase>
+            <goals><goal>enforce</goal></goals>
+            <configuration>
+              <rules>
+                <bannedDependencies>
+                  <searchTransitive>true</searchTransitive>
+                  <excludes>
+                    <exclude>org.springframework:*</exclude>
+                    <exclude>org.springframework.boot:*</exclude>
+                    <exclude>org.springframework.kafka:*</exclude>
+                    <exclude>org.apache.kafka:*</exclude>
+                    <exclude>com.fasterxml.jackson.core:*</exclude>
+                    <exclude>jakarta.persistence:*</exclude>
+                    <exclude>jakarta.validation:*</exclude>
+                    <exclude>jakarta.annotation:*</exclude>
+                    <exclude>org.xerial:sqlite-jdbc</exclude>
+                    <exclude>org.duckdb:duckdb_jdbc</exclude>
+                  </excludes>
+                  <message>
+                    O módulo de domínio não pode depender de infraestrutura.
+                    Persistência, serialização e transporte são decisões de wiring,
+                    tomadas no módulo -adapters. Se o domínio precisa "falar" com o
+                    mundo externo, declare um Port (interface) aqui e implemente-o lá.
+                  </message>
+                </bannedDependencies>
+              </rules>
+              <fail>true</fail>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

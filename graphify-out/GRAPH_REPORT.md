@@ -1,16 +1,16 @@
 # Graph Report - training_kafka  (2026-09-02)
 
 ## Corpus Check
-- 148 files · ~29,662 words
+- 156 files · ~30,612 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 944 nodes · 2592 edges · 52 communities (28 shown, 24 thin omitted)
-- Extraction: 88% EXTRACTED · 12% INFERRED · 0% AMBIGUOUS · INFERRED: 308 edges (avg confidence: 0.82)
+- 999 nodes · 2698 edges · 54 communities (32 shown, 22 thin omitted)
+- Extraction: 89% EXTRACTED · 11% INFERRED · 0% AMBIGUOUS · INFERRED: 286 edges (avg confidence: 0.82)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `928e5ee9`
+- Built from commit: `3ba66ee3`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -18,29 +18,28 @@
 - OrderId
 - ProductSalesRecord
 - CustomerOrderPattern
-- .place
+- org.springframework.http.ResponseEntity
 - DeadLetterProperties
-- AuditEvent
+- DuckDbAuditRepository.java
 - metrics-consumer (App B)
-- org.junit.jupiter.params.ParameterizedTest
+- java.sql.Connection
 - org.springframework.context.annotation.Bean
-- MetricsController
+- .place
 - org.junit.jupiter.api.Test
-- Order
-- SuspicionProperties
+- OrderPlaced
+- AuditEvent
 - DeadLetterProperties
 - orders-load.js
 - package.json
-- audit/adapters/config/KafkaErrorHandlingConfig.java
+- org.slf4j.Logger
 - org.springframework.boot.autoconfigure.SpringBootApplication
 - AuditServiceWiring.java
-- Topics
+- .toDomainEvent
 - SqliteRepositoryException
 - dev.joaolaureano.trainingkafka:training-kafka
 - AuditFilter
-- InvalidAuditException
-- .query
-- AuditQueryService
+- AuditController.java
+- AuditFilter
 - metrics-consumer
 - metrics-consumer-adapters
 - metrics-consumer-application
@@ -49,30 +48,33 @@
 - order-service-adapters
 - order-service-application
 - order-service-domain
-- AuditLevel
-- ActivityLogPublisher
+- org.junit.jupiter.params.ParameterizedTest
 - Topics
 - audit-service
 - audit-service-adapters
 - AnalyticsWiring.java
-- org.slf4j.Logger
+- OrderServiceWiring.java
 - audit-service-application
 - org.apache.kafka.clients.admin.NewTopic
-- DomainEvent
+- Override
 - audit-service-bootstrap
 - audit-service-domain
 - ActivityLog
-- org.junit.jupiter.params.provider.Arguments
+- AuditEvent
+- Order
 - .handle
 - Anticorruption Layer de tradução na fronteira
+- AuditEventTranslator.java
 - metrics-consumer-bootstrap
 - order-service-bootstrap
+- AuditEventListener
+- Topics
 
 ## God Nodes (most connected - your core abstractions)
 1. `ProductSalesRecord` - 48 edges
-2. `AuditEvent` - 43 edges
-3. `ProductId` - 41 edges
-4. `CustomerOrderPattern` - 40 edges
+2. `ProductId` - 41 edges
+3. `CustomerOrderPattern` - 40 edges
+4. `AuditEvent` - 39 edges
 5. `ProductSalesRepository` - 34 edges
 6. `AuditRepository` - 33 edges
 7. `OrderLedgerRepository` - 31 edges
@@ -87,10 +89,10 @@
   README.md → docker-compose.yml
 - `training_kafka (laboratório Kafka + DDD)` --references--> `Broker Kafka (apache/kafka:4.1.2)`  [EXTRACTED]
   README.md → docker-compose.yml
-- `KafkaErrorHandlingConfig` --references--> `DeadLetterProperties`  [EXTRACTED]
-  audit-service/audit-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/audit/adapters/config/KafkaErrorHandlingConfig.java → audit-service/audit-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/audit/adapters/config/DeadLetterProperties.java
-- `DuckDbAuditRepository` --implements--> `AuditRepository`  [EXTRACTED]
-  audit-service/audit-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/audit/adapters/persistence/duckdb/DuckDbAuditRepository.java → audit-service/audit-service-domain/src/main/java/dev/joaolaureano/trainingkafka/audit/domain/port/AuditRepository.java
+- `AuditEvent` --references--> `ApplicationName`  [EXTRACTED]
+  log-aggregator/log-aggregator-domain/src/main/java/dev/joaolaureano/trainingkafka/audit/domain/model/AuditEvent.java → log-aggregator/log-aggregator-domain/src/main/java/dev/joaolaureano/trainingkafka/audit/domain/model/ApplicationName.java
+- `AuditFilter` --references--> `ApplicationName`  [EXTRACTED]
+  log-aggregator/log-aggregator-domain/src/main/java/dev/joaolaureano/trainingkafka/audit/domain/model/LogFilter.java → log-aggregator/log-aggregator-domain/src/main/java/dev/joaolaureano/trainingkafka/audit/domain/model/ApplicationName.java
 
 ## Import Cycles
 - None detected.
@@ -99,51 +101,55 @@
 - **Pipeline de eventos A → orders → B → application-logs → C** — readme_order_service, readme_orders_topic, readme_metrics_consumer, readme_application_logs_topic, readme_log_aggregator, docker_compose_kafka_broker [EXTRACTED 1.00]
 - **Modelo de domínio do App B (3 raízes + VO derivado + handler)** — readme_productsalesrecord, readme_customerorderpattern, readme_orderrecord, readme_revenuewindow, readme_orderplacedhandler [EXTRACTED 1.00]
 
-## Communities (52 total, 24 thin omitted)
+## Communities (54 total, 22 thin omitted)
 
 ### Community 0 - "OrderId"
-Cohesion: 0.16
+Cohesion: 0.14
 Nodes (7): PlaceOrderPort, PlaceOrderRequest, PlaceOrderUseCase, Override, PlaceOrderFacade, Override, OrderId
 
 ### Community 1 - "ProductSalesRecord"
-Cohesion: 0.06
-Nodes (25): java.sql.Connection, DuckDbProductSalesRepository, Override, ProductId, InMemoryProductSalesRepository, Override, Money, Override (+17 more)
+Cohesion: 0.05
+Nodes (29): DuckDbProductSalesRepository, Override, ProductId, InMemoryProductSalesRepository, Override, Money, Override, ProductId (+21 more)
 
 ### Community 2 - "CustomerOrderPattern"
-Cohesion: 0.07
-Nodes (20): DuckDbCustomerPatternRepository, Override, InMemoryCustomerPatternRepository, Override, MoneyCents, Override, SqliteCustomerPatternRepository, CustomerPatternRepositoryContractTest (+12 more)
+Cohesion: 0.06
+Nodes (26): DuckDbCustomerPatternRepository, Override, InMemoryCustomerPatternRepository, Override, Override, SqliteCustomerPatternRepository, CustomerPatternRepositoryContractTest, CustomerId (+18 more)
 
-### Community 3 - ".place"
-Cohesion: 0.10
-Nodes (17): AuditExceptionHandler, java.time.format.DateTimeParseException, AnalyticsExceptionHandler, ApiError, ApiExceptionHandler, InvalidOrderException, CustomerId, Money (+9 more)
+### Community 3 - "org.springframework.http.ResponseEntity"
+Cohesion: 0.24
+Nodes (9): AuditExceptionHandler, java.time.format.DateTimeParseException, AnalyticsExceptionHandler, ApiError, ApiExceptionHandler, org.springframework.http.converter.HttpMessageNotReadableException, org.springframework.http.ResponseEntity, org.springframework.web.bind.annotation.ExceptionHandler (+1 more)
 
-### Community 5 - "AuditEvent"
-Cohesion: 0.15
-Nodes (9): DuckDbAuditRepository, Override, ObjectMapper, Override, JsonlFileAuditRepository, StoredLine, AuditEvent, com.fasterxml.jackson.databind.ObjectMapper (+1 more)
+### Community 4 - "DeadLetterProperties"
+Cohesion: 0.08
+Nodes (3): DeadLetterProperties, Retry, org.springframework.boot.context.properties.ConfigurationProperties
+
+### Community 5 - "DuckDbAuditRepository.java"
+Cohesion: 0.14
+Nodes (10): DuckDbAuditRepository, AuditEvent, Override, AuditEvent, ObjectMapper, Override, JsonlFileAuditRepository, StoredLine (+2 more)
 
 ### Community 6 - "metrics-consumer (App B)"
 Cohesion: 0.08
 Nodes (38): KAFKA_AUTO_CREATE_TOPICS_ENABLE=false, Listeners PLAINTEXT (9092) e PLAINTEXT_HOST (9094), Broker Kafka (apache/kafka:4.1.2), Kafka UI (kafbat/kafka-ui:8090), KRaft: nó único broker+controller, Fatores de replicação 1 para nó único, Tópico Kafka "application-logs", Gargalo: commit por mensagem no consumidor (+30 more)
 
-### Community 7 - "org.junit.jupiter.params.ParameterizedTest"
+### Community 7 - "java.sql.Connection"
 Cohesion: 0.07
-Nodes (23): AuditRepositoryContractTest, AuditLevel, Connection, AuditRepository, java.sql.PreparedStatement, DuckDbOrderLedgerRepository, Override, InMemoryOrderLedgerRepository (+15 more)
+Nodes (20): java.sql.Connection, java.sql.PreparedStatement, java.sql.ResultSet, DuckDbOrderLedgerRepository, Override, InMemoryOrderLedgerRepository, Override, MoneyCents (+12 more)
 
 ### Community 8 - "org.springframework.context.annotation.Bean"
-Cohesion: 0.10
-Nodes (13): AuditPersistenceConfiguration, DuckDbPersistence, JsonlPersistence, StdoutPersistence, AnalyticsWiring, DuckDbPersistence, InMemoryPersistence, PersistenceConfiguration (+5 more)
+Cohesion: 0.16
+Nodes (11): AuditPersistenceConfiguration, DuckDbPersistence, JsonlPersistence, StdoutPersistence, DuckDbPersistence, InMemoryPersistence, PersistenceConfiguration, SqlitePersistence (+3 more)
 
-### Community 9 - "MetricsController"
-Cohesion: 0.15
-Nodes (10): MetricsController, ProductSalesView, RevenueView, MetricsQueryPort, OrderController, PlaceOrderResponse, org.springframework.web.bind.annotation.GetMapping, org.springframework.web.bind.annotation.PostMapping (+2 more)
+### Community 9 - ".place"
+Cohesion: 0.14
+Nodes (8): InvalidOrderException, CustomerId, Money, ProductId, Quantity, Override, Violation, Violations
 
 ### Community 10 - "org.junit.jupiter.api.Test"
-Cohesion: 0.06
-Nodes (24): Override, StdoutAuditRepository, KafkaErrorHandlingConfigTest, StdoutAuditRepositoryTest, ApplicationName, Override, AuditFilterTest, KafkaErrorHandlingConfigTest (+16 more)
+Cohesion: 0.05
+Nodes (24): KafkaErrorHandlingConfigTest, StdoutAuditRepositoryTest, ApplicationName, Override, AuditFilterTest, AuditEvent, ApplicationName, AuditFilterTest (+16 more)
 
-### Community 11 - "Order"
+### Community 11 - "OrderPlaced"
 Cohesion: 0.09
-Nodes (10): CustomerId, Override, Override, Money, Override, Order, Override, ProductId (+2 more)
+Nodes (10): OrderPlacedMessage, OrderPlaced, CustomerId, Override, Override, Money, Override, ProductId (+2 more)
 
 ### Community 14 - "orders-load.js"
 Cohesion: 0.17
@@ -153,9 +159,9 @@ Nodes (13): acceptanceRate, CATALOG, options, orderLatency, ordersAccepted, orde
 Cohesion: 0.14
 Nodes (13): esbuild, @faker-js/faker, description, devDependencies, esbuild, @faker-js/faker, name, private (+5 more)
 
-### Community 16 - "audit/adapters/config/KafkaErrorHandlingConfig.java"
-Cohesion: 0.28
-Nodes (8): KafkaErrorHandlingConfig, KafkaErrorHandlingConfig, org.springframework.boot.autoconfigure.condition.ConditionalOnProperty, org.springframework.boot.autoconfigure.kafka.KafkaProperties, org.springframework.boot.context.properties.EnableConfigurationProperties, org.springframework.kafka.core.KafkaOperations, org.springframework.kafka.listener.CommonErrorHandler, org.springframework.util.backoff.BackOff
+### Community 16 - "org.slf4j.Logger"
+Cohesion: 0.27
+Nodes (9): KafkaErrorHandlingConfig, KafkaErrorHandlingConfig, org.slf4j.Logger, org.springframework.boot.autoconfigure.condition.ConditionalOnProperty, org.springframework.boot.autoconfigure.kafka.KafkaProperties, org.springframework.boot.context.properties.EnableConfigurationProperties, org.springframework.kafka.core.KafkaOperations, org.springframework.kafka.listener.CommonErrorHandler (+1 more)
 
 ### Community 17 - "org.springframework.boot.autoconfigure.SpringBootApplication"
 Cohesion: 0.27
@@ -163,75 +169,87 @@ Nodes (4): AuditServiceBootstrap, MetricsConsumerBootstrap, OrderServiceBootstra
 
 ### Community 18 - "AuditServiceWiring.java"
 Cohesion: 0.17
-Nodes (6): AuditEventListener, IngestAuditPort, IngestAuditService, AuditServiceWiring, IngestAuditFacade, Override
+Nodes (7): IngestAuditPort, AuditQueryPort, AuditQueryService, IngestAuditService, AuditServiceWiring, AuditQueryFacade, IngestAuditFacade
 
-### Community 23 - "InvalidAuditException"
-Cohesion: 0.24
-Nodes (3): AuditEventMessage, AuditEventTranslator, InvalidAuditException
+### Community 19 - ".toDomainEvent"
+Cohesion: 0.23
+Nodes (5): OrderPlacedMessage, OrderPlaced, Quantity, OrderPlacedTranslator, InvalidValueException
 
-### Community 24 - ".query"
-Cohesion: 0.27
-Nodes (3): AuditController, AuditEventView, AuditQueryPort
+### Community 22 - "AuditFilter"
+Cohesion: 0.10
+Nodes (10): Override, AuditFilter, AuditLevel, DEBUG, ERROR, INFO, WARN, isAtLeast() (+2 more)
 
-### Community 25 - "AuditQueryService"
-Cohesion: 0.31
-Nodes (3): AuditQueryService, AuditQueryFacade, Override
+### Community 24 - "AuditController.java"
+Cohesion: 0.15
+Nodes (12): AuditController, AuditEventView, MetricsController, ProductSalesView, RevenueView, MetricsQueryPort, OrderController, PlaceOrderResponse (+4 more)
 
-### Community 34 - "AuditLevel"
-Cohesion: 0.32
-Nodes (7): AuditLevel, DEBUG, ERROR, INFO, WARN, isAtLeast(), parse()
+### Community 25 - "AuditFilter"
+Cohesion: 0.08
+Nodes (10): AuditEvent, AuditFilter, AuditLevel, DEBUG, ERROR, INFO, WARN, isAtLeast() (+2 more)
 
-### Community 35 - "ActivityLogPublisher"
-Cohesion: 0.52
-Nodes (3): PlaceOrderService, ActivityLogPublisher, OrderEventPublisher
+### Community 34 - "org.junit.jupiter.params.ParameterizedTest"
+Cohesion: 0.28
+Nodes (7): AuditRepositoryContractTest, AuditEvent, AuditLevel, Connection, AuditRepository, org.junit.jupiter.params.ParameterizedTest, org.junit.jupiter.params.provider.MethodSource
 
 ### Community 39 - "AnalyticsWiring.java"
-Cohesion: 0.06
-Nodes (23): OrderListener, OrderPlacedMessage, OrderPlacedPort, OrderPlaced, Quantity, OrderPlacedTranslator, OrderPlacedHandler, FakeProductSales (+15 more)
+Cohesion: 0.09
+Nodes (12): SuspicionProperties, AuditEventMessage, Override, KafkaDomainEventPublisher, OrderPlacedPort, OrderPlacedHandler, RecordingPublisher, AnalyticsWiring (+4 more)
 
-### Community 40 - "org.slf4j.Logger"
-Cohesion: 0.19
-Nodes (8): AuditEventMessage, Override, KafkaDomainEventPublisher, KafkaActivityLogPublisher, KafkaOrderEventPublisher, ActivityLogFacade, org.slf4j.Logger, org.springframework.kafka.core.KafkaTemplate
+### Community 40 - "OrderServiceWiring.java"
+Cohesion: 0.20
+Nodes (8): KafkaActivityLogPublisher, KafkaOrderEventPublisher, PlaceOrderService, ActivityLogPublisher, OrderServiceWiring, ActivityLogFacade, OrderEventPublisher, org.springframework.kafka.core.KafkaTemplate
 
 ### Community 42 - "org.apache.kafka.clients.admin.NewTopic"
 Cohesion: 0.28
 Nodes (3): KafkaTopicsConfig, Topics, org.apache.kafka.clients.admin.NewTopic
 
-### Community 43 - "DomainEvent"
-Cohesion: 0.18
-Nodes (4): Override, OrderPlacedMessage, DomainEvent, OrderPlaced
-
 ### Community 47 - "ActivityLog"
-Cohesion: 0.13
-Nodes (7): AuditEventMessage, ActivityLog, AuditLevel, ERROR, INFO, WARN, Override
+Cohesion: 0.11
+Nodes (9): AuditEventMessage, ActivityLog, AuditLevel, ERROR, INFO, WARN, Override, RecordingLogPublisher (+1 more)
+
+### Community 48 - "AuditEvent"
+Cohesion: 0.20
+Nodes (4): Override, StdoutAuditRepository, Override, AuditEvent
+
+### Community 49 - "Order"
+Cohesion: 0.17
+Nodes (4): Override, DomainEvent, Override, Order
 
 ### Community 50 - ".handle"
-Cohesion: 0.24
-Nodes (6): PlaceOrderCommand, Override, Override, PlaceOrderServiceTest, RecordingEventPublisher, RecordingLogPublisher
+Cohesion: 0.35
+Nodes (4): PlaceOrderCommand, Override, PlaceOrderServiceTest, RecordingEventPublisher
 
 ### Community 53 - "Anticorruption Layer de tradução na fronteira"
 Cohesion: 0.50
 Nodes (5): Anticorruption Layer de tradução na fronteira, Contratos de evento duplicados por serviço, LogEntryTranslator, spring.json.add.type.headers=false, OrderPlacedTranslator
 
+### Community 54 - "AuditEventTranslator.java"
+Cohesion: 0.18
+Nodes (5): AuditEventMessage, AuditEventTranslator, AuditEvent, InvalidAuditException, InvalidAuditException
+
+### Community 58 - "AuditEventListener"
+Cohesion: 0.24
+Nodes (4): AuditEventListener, OrderListener, org.springframework.kafka.annotation.KafkaListener, org.springframework.stereotype.Component
+
 ## Knowledge Gaps
-- **42 isolated node(s):** `audit-service-adapters`, `audit-service-application`, `audit-service-bootstrap`, `audit-service-domain`, `DEBUG` (+37 more)
+- **46 isolated node(s):** `DEBUG`, `INFO`, `WARN`, `ERROR`, `acceptanceRate` (+41 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **24 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **22 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AuditEvent` connect `AuditEvent` to `AuditLevel`, `org.junit.jupiter.params.ParameterizedTest`, `org.junit.jupiter.api.Test`, `AuditServiceWiring.java`, `AuditFilter`, `InvalidAuditException`, `.query`, `AuditQueryService`?**
-  _High betweenness centrality (0.053) - this node is a cross-community bridge._
-- **Why does `DeadLetterProperties` connect `DeadLetterProperties` to `audit/adapters/config/KafkaErrorHandlingConfig.java`, `org.apache.kafka.clients.admin.NewTopic`, `SuspicionProperties`?**
+- **Why does `AuditEvent` connect `AuditEvent` to `DuckDbAuditRepository.java`, `org.junit.jupiter.api.Test`, `AuditServiceWiring.java`, `AuditEventTranslator.java`, `AuditFilter`, `AuditController.java`, `AuditFilter`, `AuditEventListener`?**
   _High betweenness centrality (0.041) - this node is a cross-community bridge._
-- **Why does `DeadLetterProperties` connect `DeadLetterProperties` to `audit/adapters/config/KafkaErrorHandlingConfig.java`, `SuspicionProperties`?**
-  _High betweenness centrality (0.041) - this node is a cross-community bridge._
-- **Are the 3 inferred relationships involving `AuditEvent` (e.g. with `.omitsEmptyContext()` and `.printsTheEssentials()`) actually correct?**
-  _`AuditEvent` has 3 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `audit-service-adapters`, `audit-service-application`, `audit-service-bootstrap` to the rest of the system?**
-  _42 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `DeadLetterProperties` connect `DeadLetterProperties` to `org.slf4j.Logger`?**
+  _High betweenness centrality (0.039) - this node is a cross-community bridge._
+- **Why does `DeadLetterProperties` connect `DeadLetterProperties` to `org.slf4j.Logger`, `org.apache.kafka.clients.admin.NewTopic`, `DeadLetterProperties`?**
+  _High betweenness centrality (0.039) - this node is a cross-community bridge._
+- **Are the 4 inferred relationships involving `ProductId` (e.g. with `.toDomainEvent()` and `.revenue()`) actually correct?**
+  _`ProductId` has 4 INFERRED edges - model-reasoned connections that need verification._
+- **What connects `DEBUG`, `INFO`, `WARN` to the rest of the system?**
+  _46 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `OrderId` be split into smaller, more focused modules?**
+  _Cohesion score 0.14285714285714285 - nodes in this community are weakly interconnected._
 - **Should `ProductSalesRecord` be split into smaller, more focused modules?**
-  _Cohesion score 0.062066063538817585 - nodes in this community are weakly interconnected._
-- **Should `CustomerOrderPattern` be split into smaller, more focused modules?**
-  _Cohesion score 0.07098765432098765 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05431140892258861 - nodes in this community are weakly interconnected._

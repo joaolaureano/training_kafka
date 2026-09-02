@@ -6,8 +6,8 @@
     "semantic_hash": "09e33790735b6b4b717d6876019271b7"
   },
   "load-tests/src/orders-load.js": {
-    "mtime": 1788361145.2578397,
-    "seen": 1788361194.51599,
+    "mtime": 1788363050.0063171,
+    "seen": 1788363083.022263,
     "ast_hash": "dec4098744b82e33fe6a93b40c4db892",
     "semantic_hash": ""
   },
@@ -24,8 +24,8 @@
     "semantic_hash": "ebae89be2648c283b34186cb73ed12e8"
   },
   "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/messaging/KafkaDomainEventPublisher.java": {
-    "mtime": 1788360985.808903,
-    "seen": 1788361194.516,
+    "mtime": 1788363050.031371,
+    "seen": 1788363083.022285,
     "ast_hash": "104d694d661e13a7b6eccfd9577d9f8a",
     "semantic_hash": ""
   },
@@ -48,8 +48,8 @@
     "semantic_hash": "8859a99449d9d0f6e490bf406c9b6a87"
   },
   "metrics-consumer/metrics-consumer-adapters/src/main/java/dev/joaolaureano/trainingkafka/analytics/adapters/messaging/Topics.java": {
-    "mtime": 1788360985.8080082,
-    "seen": 1788361194.516007,
+    "mtime": 1788363050.0313501,
+    "seen": 1788363083.022294,
     "ast_hash": "0bd642a29e0f23cdbee70a26bdb9f37f",
     "semantic_hash": ""
   },
@@ -354,8 +354,8 @@
     "semantic_hash": ""
   },
   "order-service/order-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/orders/adapters/messaging/KafkaActivityLogPublisher.java": {
-    "mtime": 1788360985.8183198,
-    "seen": 1788361194.516096,
+    "mtime": 1788363050.031277,
+    "seen": 1788363083.022388,
     "ast_hash": "9f1c46b115265341ffdd997d986b27f7",
     "semantic_hash": ""
   },
@@ -372,8 +372,8 @@
     "semantic_hash": "51f9231f3202a40c265e3e34ea41ad7d"
   },
   "order-service/order-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/orders/adapters/messaging/Topics.java": {
-    "mtime": 1788360985.8167443,
-    "seen": 1788361194.5161011,
+    "mtime": 1788363050.0313578,
+    "seen": 1788363083.022393,
     "ast_hash": "f6c9bea1076ee53544718beeaded7e66",
     "semantic_hash": ""
   },
@@ -420,8 +420,8 @@
     "semantic_hash": "995049a75e18e139f70bded9f5365f7e"
   },
   "order-service/order-service-application/src/main/java/dev/joaolaureano/trainingkafka/orders/application/PlaceOrderService.java": {
-    "mtime": 1788360985.8219638,
-    "seen": 1788361194.5161128,
+    "mtime": 1788363050.0312986,
+    "seen": 1788363083.0224068,
     "ast_hash": "0c0c59b7f899d6dfecb8d73c231e4b5e",
     "semantic_hash": ""
   },
@@ -432,8 +432,8 @@
     "semantic_hash": "33b0e248bedf5dc78ed48fdb44857994"
   },
   "order-service/order-service-application/src/main/java/dev/joaolaureano/trainingkafka/orders/application/port/ActivityLog.java": {
-    "mtime": 1788360985.822756,
-    "seen": 1788361194.516116,
+    "mtime": 1788363050.031277,
+    "seen": 1788363083.02241,
     "ast_hash": "aa3ccb7427209a84170a3333bf313b43",
     "semantic_hash": ""
   },
@@ -444,8 +444,8 @@
     "semantic_hash": "48782169c8012bcd9dbd0586cc4c327e"
   },
   "order-service/order-service-application/src/test/java/dev/joaolaureano/trainingkafka/orders/application/PlaceOrderServiceTest.java": {
-    "mtime": 1788361005.17098,
-    "seen": 1788361194.5161211,
+    "mtime": 1788363050.0314326,
+    "seen": 1788363083.0224159,
     "ast_hash": "ab2c4049126d6f4e2909d4223667c1b1",
     "semantic_hash": ""
   },
@@ -528,8 +528,8 @@
     "semantic_hash": "f46a9f7c23f6425071e15270189ebc75"
   },
   "order-service/order-service-domain/src/test/java/dev/joaolaureano/trainingkafka/orders/domain/model/OrderTest.java": {
-    "mtime": 1788361005.1656675,
-    "seen": 1788361194.5161479,
+    "mtime": 1788363050.0314507,
+    "seen": 1788363083.0224462,
     "ast_hash": "091091d494d0da731419048ff4fd446a",
     "semantic_hash": "091091d494d0da731419048ff4fd446a"
   },
@@ -546,9 +546,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1788361145.2578578,
-    "seen": 1788361194.516154,
-    "ast_hash": "d0c9e72f778c5dcbf86160fca8853af5",
+    "mtime": 1788363050.0063515,
+    "seen": 1788363083.0224519,
+    "ast_hash": "5f35d65fe28650abc870dd499652c469",
     "semantic_hash": ""
   },
   "docker-compose.yml": {
@@ -696,8 +696,8 @@
     "semantic_hash": ""
   },
   "audit-service/audit-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/audit/adapters/messaging/AuditEventListener.java": {
-    "mtime": 1788361030.1458306,
-    "seen": 1788361194.5159402,
+    "mtime": 1788363050.0314171,
+    "seen": 1788363083.022204,
     "ast_hash": "6f89a150612d78604572bf99a9169623",
     "semantic_hash": ""
   },
@@ -720,15 +720,15 @@
     "semantic_hash": ""
   },
   "audit-service/audit-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/audit/adapters/messaging/Topics.java": {
-    "mtime": 1788360985.8364885,
-    "seen": 1788361194.515946,
+    "mtime": 1788363050.031336,
+    "seen": 1788363083.0222132,
     "ast_hash": "741637f38df071ca3dcf5a02bfec9da1",
     "semantic_hash": ""
   },
   "audit-service/audit-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/audit/adapters/persistence/duckdb/DuckDbAuditRepository.java": {
-    "mtime": 1788360985.836095,
-    "seen": 1788361194.515948,
-    "ast_hash": "dded5bf0582b2e7941f692b5a9d51ab4",
+    "mtime": 1788363050.0313752,
+    "seen": 1788363083.022215,
+    "ast_hash": "d6d5e6b11c453e98ef6416c297dd0951",
     "semantic_hash": ""
   },
   "audit-service/audit-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/audit/adapters/persistence/jsonl/JsonlFileAuditRepository.java": {
@@ -744,8 +744,8 @@
     "semantic_hash": ""
   },
   "audit-service/audit-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/audit/adapters/web/AuditController.java": {
-    "mtime": 1788360985.833926,
-    "seen": 1788361194.515952,
+    "mtime": 1788363050.031297,
+    "seen": 1788363083.0222201,
     "ast_hash": "9567e440d1370dcfd02d28abf5544b53",
     "semantic_hash": ""
   },
@@ -768,14 +768,14 @@
     "semantic_hash": ""
   },
   "audit-service/audit-service-adapters/src/test/java/dev/joaolaureano/trainingkafka/audit/adapters/persistence/AuditRepositoryContractTest.java": {
-    "mtime": 1788361064.1882145,
-    "seen": 1788361194.5159569,
+    "mtime": 1788363050.0313892,
+    "seen": 1788363083.022227,
     "ast_hash": "de19f5a3becec7d89c6fd2eaffdf0996",
     "semantic_hash": ""
   },
   "audit-service/audit-service-adapters/src/test/java/dev/joaolaureano/trainingkafka/audit/adapters/persistence/StdoutAuditRepositoryTest.java": {
-    "mtime": 1788361005.189643,
-    "seen": 1788361194.515959,
+    "mtime": 1788363050.0314,
+    "seen": 1788363083.022228,
     "ast_hash": "91641e4fe826d400626371e71d498701",
     "semantic_hash": ""
   },
@@ -804,14 +804,14 @@
     "semantic_hash": ""
   },
   "audit-service/audit-service-bootstrap/src/main/java/dev/joaolaureano/trainingkafka/audit/bootstrap/AuditServiceBootstrap.java": {
-    "mtime": 1788360985.840419,
-    "seen": 1788361194.515965,
+    "mtime": 1788363050.0313137,
+    "seen": 1788363083.0222359,
     "ast_hash": "bdb092b363c06d7f76c204fa7c9eb06e",
     "semantic_hash": ""
   },
   "audit-service/audit-service-bootstrap/src/main/java/dev/joaolaureano/trainingkafka/audit/bootstrap/config/AuditPersistenceConfiguration.java": {
-    "mtime": 1788360985.8389537,
-    "seen": 1788361194.515967,
+    "mtime": 1788363050.031321,
+    "seen": 1788363083.022238,
     "ast_hash": "bc446380e229bb5408b6891d0f8a15a9",
     "semantic_hash": ""
   },
@@ -882,8 +882,8 @@
     "semantic_hash": ""
   },
   "audit-service/audit-service-domain/src/test/java/dev/joaolaureano/trainingkafka/audit/domain/model/AuditFilterTest.java": {
-    "mtime": 1788361145.2725341,
-    "seen": 1788361194.515983,
+    "mtime": 1788363050.03141,
+    "seen": 1788363083.0222569,
     "ast_hash": "84cd7d3d3a7e9cda3b4116340e183449",
     "semantic_hash": ""
   },
@@ -912,9 +912,57 @@
     "semantic_hash": ""
   },
   "audit-service/audit-service-bootstrap/src/main/resources/application.yml": {
-    "mtime": 1788360985.8384793,
-    "seen": 1788361194.5161548,
-    "ast_hash": "6e8d9fcec5748f806c7c6f7c665097f8",
+    "mtime": 1788363050.006347,
+    "seen": 1788363083.022454,
+    "ast_hash": "ccd4a1a99396b4d712d086af32aab73e",
+    "semantic_hash": ""
+  },
+  "log-aggregator/log-aggregator-domain/src/main/java/dev/joaolaureano/trainingkafka/audit/domain/model/ApplicationName.java": {
+    "mtime": 1788363050.2471774,
+    "seen": 1788363083.022264,
+    "ast_hash": "e22ddb0657b9cb40481ef6d333eda56e",
+    "semantic_hash": ""
+  },
+  "log-aggregator/log-aggregator-domain/src/main/java/dev/joaolaureano/trainingkafka/audit/domain/model/AuditEvent.java": {
+    "mtime": 1788363050.2124724,
+    "seen": 1788363083.0222661,
+    "ast_hash": "1c655fae99bc170a02c5153ad04712b0",
+    "semantic_hash": ""
+  },
+  "log-aggregator/log-aggregator-domain/src/main/java/dev/joaolaureano/trainingkafka/audit/domain/model/InvalidLogException.java": {
+    "mtime": 1788363050.212667,
+    "seen": 1788363083.0222669,
+    "ast_hash": "a3ab8de8ea497ff56471af0a4bccb5bf",
+    "semantic_hash": ""
+  },
+  "log-aggregator/log-aggregator-domain/src/main/java/dev/joaolaureano/trainingkafka/audit/domain/model/LogFilter.java": {
+    "mtime": 1788363050.21273,
+    "seen": 1788363083.022269,
+    "ast_hash": "ea4eefdcb10cd5bb90b1f5b7cdb91272",
+    "semantic_hash": ""
+  },
+  "log-aggregator/log-aggregator-domain/src/main/java/dev/joaolaureano/trainingkafka/audit/domain/model/LogLevel.java": {
+    "mtime": 1788363050.2473776,
+    "seen": 1788363083.02227,
+    "ast_hash": "f3d314ece32a83804ffe3ba3d5d864f8",
+    "semantic_hash": ""
+  },
+  "log-aggregator/log-aggregator-domain/src/main/java/dev/joaolaureano/trainingkafka/audit/domain/model/TimeRange.java": {
+    "mtime": 1788363050.2126567,
+    "seen": 1788363083.022271,
+    "ast_hash": "b07862f6a6e1f1d307a541bfcfcb2b62",
+    "semantic_hash": ""
+  },
+  "log-aggregator/log-aggregator-domain/src/main/java/dev/joaolaureano/trainingkafka/audit/domain/port/AuditRepository.java": {
+    "mtime": 1788363050.2127383,
+    "seen": 1788363083.022273,
+    "ast_hash": "edd7617f542f80a2e53921c349ad523f",
+    "semantic_hash": ""
+  },
+  "log-aggregator/log-aggregator-domain/src/test/java/dev/joaolaureano/trainingkafka/audit/domain/model/LogFilterTest.java": {
+    "mtime": 1788363050.2565072,
+    "seen": 1788363083.022274,
+    "ast_hash": "bd3d1a62b804bde40deb8f2446db2d3e",
     "semantic_hash": ""
   }
 }

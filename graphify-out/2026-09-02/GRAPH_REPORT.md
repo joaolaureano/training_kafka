@@ -1,4 +1,4 @@
-# Graph Report - training_kafka  (2026-08-31)
+# Graph Report - training_kafka  (2026-09-02)
 
 ## Corpus Check
 - 148 files · ~29,689 words
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5d1020ec`
+- Built from commit: `419f6b04`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -19,8 +19,8 @@
 - ProductSalesRecord
 - CustomerOrderPattern
 - Violation
-- ActivityLogPublisher
-- org.slf4j.Logger
+- LogAggregatorWiring.java
+- ApplicationName
 - metrics-consumer (App B)
 - org.junit.jupiter.params.ParameterizedTest
 - org.springframework.context.annotation.Bean
@@ -31,7 +31,7 @@
 - DeadLetterProperties
 - orders-load.js
 - package.json
-- ApplicationName
+- logs/adapters/config/KafkaErrorHandlingConfig.java
 - org.springframework.boot.autoconfigure.SpringBootApplication
 - LogFilter
 - Topics
@@ -49,17 +49,17 @@
 - order-service-adapters
 - order-service-application
 - order-service-domain
-- logs/adapters/config/KafkaErrorHandlingConfig.java
 - StdoutLogRepository
-- LogAggregatorWiring.java
-- InvalidLogException
+- org.slf4j.Logger
+- LogEntry
+- KafkaErrorHandlingConfigTest
 - Order
 - AnalyticsWiring.java
-- .place
-- KafkaErrorHandlingConfigTest
-- LogEntry
-- DomainEvent
+- ActivityLogPublisher
+- InvalidLogException
 - org.apache.kafka.clients.admin.NewTopic
+- DomainEvent
+- .place
 - KafkaActivityLogPublisher
 - SuspicionProperties
 - ActivityLog
@@ -122,13 +122,13 @@ Nodes (27): java.sql.ResultSet, DuckDbCustomerPatternRepository, Override, InMem
 Cohesion: 0.11
 Nodes (13): java.time.format.DateTimeParseException, LogExceptionHandler, AnalyticsExceptionHandler, ApiError, ApiExceptionHandler, InvalidOrderException, Override, Violation (+5 more)
 
-### Community 4 - "ActivityLogPublisher"
-Cohesion: 0.27
-Nodes (4): PlaceOrderService, ActivityLogPublisher, OrderServiceWiring, OrderEventPublisher
+### Community 4 - "LogAggregatorWiring.java"
+Cohesion: 0.17
+Nodes (7): LogController, LogEntryView, LogQueryPort, LogQueryService, LogAggregatorWiring, Override, LogQueryFacade
 
-### Community 5 - "org.slf4j.Logger"
-Cohesion: 0.24
-Nodes (6): ApplicationLogMessage, Override, KafkaDomainEventPublisher, KafkaOrderEventPublisher, org.slf4j.Logger, org.springframework.kafka.core.KafkaTemplate
+### Community 5 - "ApplicationName"
+Cohesion: 0.18
+Nodes (5): com.fasterxml.jackson.databind.ObjectMapper, DuckDbLogRepository, Override, ApplicationName, Override
 
 ### Community 6 - "metrics-consumer (App B)"
 Cohesion: 0.08
@@ -162,29 +162,29 @@ Nodes (13): acceptanceRate, CATALOG, options, orderLatency, ordersAccepted, orde
 Cohesion: 0.14
 Nodes (13): esbuild, @faker-js/faker, description, devDependencies, esbuild, @faker-js/faker, name, private (+5 more)
 
-### Community 16 - "ApplicationName"
-Cohesion: 0.18
-Nodes (5): com.fasterxml.jackson.databind.ObjectMapper, DuckDbLogRepository, Override, ApplicationName, Override
+### Community 16 - "logs/adapters/config/KafkaErrorHandlingConfig.java"
+Cohesion: 0.30
+Nodes (8): KafkaErrorHandlingConfig, KafkaErrorHandlingConfig, org.springframework.boot.autoconfigure.condition.ConditionalOnProperty, org.springframework.boot.autoconfigure.kafka.KafkaProperties, org.springframework.boot.context.properties.EnableConfigurationProperties, org.springframework.kafka.core.KafkaOperations, org.springframework.kafka.listener.CommonErrorHandler, org.springframework.util.backoff.BackOff
 
 ### Community 17 - "org.springframework.boot.autoconfigure.SpringBootApplication"
 Cohesion: 0.27
 Nodes (4): LogAggregatorBootstrap, MetricsConsumerBootstrap, OrderServiceBootstrap, org.springframework.boot.autoconfigure.SpringBootApplication
 
-### Community 34 - "logs/adapters/config/KafkaErrorHandlingConfig.java"
-Cohesion: 0.30
-Nodes (8): KafkaErrorHandlingConfig, KafkaErrorHandlingConfig, org.springframework.boot.autoconfigure.condition.ConditionalOnProperty, org.springframework.boot.autoconfigure.kafka.KafkaProperties, org.springframework.boot.context.properties.EnableConfigurationProperties, org.springframework.kafka.core.KafkaOperations, org.springframework.kafka.listener.CommonErrorHandler, org.springframework.util.backoff.BackOff
-
-### Community 35 - "StdoutLogRepository"
+### Community 34 - "StdoutLogRepository"
 Cohesion: 0.26
 Nodes (4): Override, StdoutLogRepository, StdoutLogRepositoryTest, org.junit.jupiter.api.AfterEach
 
-### Community 36 - "LogAggregatorWiring.java"
-Cohesion: 0.17
-Nodes (7): LogController, LogEntryView, LogQueryPort, LogQueryService, LogAggregatorWiring, Override, LogQueryFacade
-
-### Community 37 - "InvalidLogException"
+### Community 35 - "org.slf4j.Logger"
 Cohesion: 0.24
-Nodes (3): ApplicationLogMessage, LogEntryTranslator, InvalidLogException
+Nodes (6): ApplicationLogMessage, Override, KafkaDomainEventPublisher, KafkaOrderEventPublisher, org.slf4j.Logger, org.springframework.kafka.core.KafkaTemplate
+
+### Community 36 - "LogEntry"
+Cohesion: 0.26
+Nodes (5): IngestLogPort, IngestLogService, IngestLogFacade, Override, LogEntry
+
+### Community 37 - "KafkaErrorHandlingConfigTest"
+Cohesion: 0.18
+Nodes (3): KafkaErrorHandlingConfigTest, KafkaErrorHandlingConfigTest, org.springframework.boot.test.context.runner.ApplicationContextRunner
 
 ### Community 38 - "Order"
 Cohesion: 0.18
@@ -194,25 +194,25 @@ Nodes (4): Override, Order, OrderTest, WhenValid
 Cohesion: 0.05
 Nodes (25): ApplicationLogListener, OrderListener, OrderPlacedMessage, OrderPlacedPort, OrderPlaced, Quantity, OrderPlacedTranslator, OrderPlacedHandler (+17 more)
 
-### Community 40 - ".place"
+### Community 40 - "ActivityLogPublisher"
+Cohesion: 0.27
+Nodes (4): PlaceOrderService, ActivityLogPublisher, OrderServiceWiring, OrderEventPublisher
+
+### Community 41 - "InvalidLogException"
 Cohesion: 0.24
-Nodes (5): CustomerId, Money, ProductId, Quantity, WhenInvalid
+Nodes (3): ApplicationLogMessage, LogEntryTranslator, InvalidLogException
 
-### Community 41 - "KafkaErrorHandlingConfigTest"
-Cohesion: 0.18
-Nodes (3): KafkaErrorHandlingConfigTest, KafkaErrorHandlingConfigTest, org.springframework.boot.test.context.runner.ApplicationContextRunner
-
-### Community 42 - "LogEntry"
-Cohesion: 0.26
-Nodes (5): IngestLogPort, IngestLogService, IngestLogFacade, Override, LogEntry
+### Community 42 - "org.apache.kafka.clients.admin.NewTopic"
+Cohesion: 0.24
+Nodes (3): KafkaTopicsConfig, Topics, org.apache.kafka.clients.admin.NewTopic
 
 ### Community 43 - "DomainEvent"
 Cohesion: 0.16
 Nodes (5): Override, Override, RecordingEventPublisher, RecordingLogPublisher, DomainEvent
 
-### Community 44 - "org.apache.kafka.clients.admin.NewTopic"
+### Community 44 - ".place"
 Cohesion: 0.24
-Nodes (3): KafkaTopicsConfig, Topics, org.apache.kafka.clients.admin.NewTopic
+Nodes (5): CustomerId, Money, ProductId, Quantity, WhenInvalid
 
 ### Community 45 - "KafkaActivityLogPublisher"
 Cohesion: 0.32
@@ -246,7 +246,7 @@ Nodes (5): Anticorruption Layer de tradução na fronteira, Contratos de evento 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `LogEntry` connect `LogEntry` to `StdoutLogRepository`, `LogAggregatorWiring.java`, `InvalidLogException`, `org.junit.jupiter.params.ParameterizedTest`, `org.junit.jupiter.api.Test`, `ApplicationName`, `LogFilter`, `JsonlFileLogRepository`, `LogLevel`?**
+- **Why does `LogEntry` connect `LogEntry` to `StdoutLogRepository`, `LogAggregatorWiring.java`, `ApplicationName`, `org.junit.jupiter.params.ParameterizedTest`, `InvalidLogException`, `org.junit.jupiter.api.Test`, `LogFilter`, `JsonlFileLogRepository`, `LogLevel`?**
   _High betweenness centrality (0.053) - this node is a cross-community bridge._
 - **Why does `DeadLetterProperties` connect `DeadLetterProperties` to `logs/adapters/config/KafkaErrorHandlingConfig.java`, `org.apache.kafka.clients.admin.NewTopic`, `SuspicionProperties`?**
   _High betweenness centrality (0.041) - this node is a cross-community bridge._

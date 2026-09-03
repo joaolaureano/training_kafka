@@ -15,34 +15,14 @@ então uma `@Service` escrita ali simplesmente não compila.
 
 ## O fluxo
 
-```
-  [k6]
-    │  POST /orders
-    ▼
-┌─────────────────────┐   OrderPlaced    ┌──────────────────────┐
-│  App A              │ ───────────────► │  App B               │
-│  order-service      │  tópico "orders" │  metrics-consumer    │
-│  :8080              │  key=customerId  │  :8081               │
-└──────────┬──────────┘                              │
-       │                                        │ métricas
-       │                                        │
-       ▼                                        ▼
-     ┌──────────────────────┐  Kafka Streams  ┌──────────────────────┐
-     │  App D               │ ◄───────────────┤  tópico "orders"      │
-     │  fraud-service       │                 │  key=customerId       │
-     │  state store local   │                 └──────────────────────┘
-     └──────────┬───────────┘
-        │ FraudDetected / audit event
-        ▼
-      ┌──────────────────────────────────────────────────┐
-      │            tópico "audit-events"             │
-      └───────────────────────┬──────────────────────────┘
-                              ▼
-                   ┌──────────────────────┐
-                   │  App C               │
-                   │  audit-service      │
-                   │  :8082               │
-                   └──────────────────────┘
+```mermaid
+flowchart LR
+    K6[k6] -->|POST /orders| Order[App A<br/>order-service<br/>:8080]
+    Order -->|OrderPlaced<br/>orders<br/>key: customerId| Metrics[App B<br/>metrics-consumer<br/>:8081]
+    Order -->|OrderPlaced<br/>orders<br/>key: customerId| Fraud[App D<br/>fraud-service<br/>Kafka Streams]
+    Metrics -->|métricas de venda| MetricsApi[REST /metrics]
+    Fraud -->|FraudDetected<br/>audit-events| Audit[App C<br/>audit-service<br/>:8082]
+    Order -->|logs estruturados<br/>audit-events| Audit
 ```
 
 ## Os quatro serviços
@@ -50,7 +30,7 @@ então uma `@Service` escrita ali simplesmente não compila.
 | App | Módulo | Porta | O que faz |
 |---|---|---|---|
 | **A** | `order-service` | 8080 | Recebe pedidos por HTTP, valida no domínio, publica em `orders` (particionado por `customerId`) e registra logs estruturados |
-| **B** | `metrics-consumer` | 8081 | Consome `orders`, acumula métricas de venda e detecta padrões suspeitos de pedido |
+| **B** | `metrics-consumer` | 8081 | Consome `orders` e acumula métricas de venda |
 | **C** | `audit-service` | 8082 | Consome `audit-events`, persiste e responde consultas por nível/app/período |
 | **D** | `fraud-service` | — | Processa `orders` com Kafka Streams e publica alertas em `audit-events` |
 
@@ -77,9 +57,11 @@ vistos para deduplicação e o maior `occurredAt` observado. O changelog interno
 permite reconstruir o estado sem banco externo. A regra emite um alerta somente
 na transição normal para suspeito.
 
-`occurredAt` é extraído como event-time. Eventos até 2 segundos atrasados ainda
-podem ser processados; eventos mais antigos que o grace period são ignorados para
-não reabrir estado indefinidamente. A ordem só é garantida dentro da partição.
+`occurredAt` é extraído como event-time. O transformer aceita eventos até 2 segundos
+atrás do maior timestamp já visto para o cliente; eventos mais antigos são ignorados
+para não reabrir estado indefinidamente. Essa é uma política de atraso implementada
+no stateful transformer, não uma janela DSL nativa do Kafka Streams. A ordem só é
+garantida dentro da partição.
 Como `orders` é publicado com `customerId` e três partições, todos os eventos de
 um cliente chegam à mesma task. O serviço pode escalar até o número de partições,
 distribuindo tasks entre stream threads e instâncias; aumentar threads além das
@@ -88,13 +70,13 @@ partições não cria paralelismo adicional.
 O serviço usa `application.id=fraud-service` e `processing.guarantee=exactly_once_v2`.
 Offsets, state store e publicação Kafka são coordenados transacionalmente. Isso
 protege os efeitos Kafka durante replay/restart, mas não torna efeitos externos
-idempotentes. Alertas têm chave de cliente e IDs de pedido determinísticos no
-contexto, enquanto o `audit-service` continua consumindo o contrato existente.
+idempotentes. Os alertas usam `customerId` como chave e carregam os IDs dos pedidos
+na amostra, enquanto o `audit-service` continua consumindo o contrato existente.
 
 | Tópico | Key | Value | Partições | Producer | Consumer |
 |---|---|---|---:|---|---|
 | `orders` | `customerId` | `OrderPlacedMessage` | 3 | `order-service` | `metrics-consumer`, `fraud-service` |
-| `audit-events` | `customerId` | `AuditEventMessage` | 3 | `order-service`, `fraud-service` | `audit-service` |
+| `audit-events` | `applicationName` pelo `order-service`; `customerId` pelo `fraud-service` | `AuditEventMessage` | 3 | `order-service`, `fraud-service` | `audit-service` |
 
 O broker mantém auto-criação desligada. `orders` e `audit-events` são criados
 pelos serviços existentes; o state store não é um tópico de negócio e seu
@@ -289,15 +271,19 @@ uma vez só. Isso muda o adapter, não o domínio — o que é justamente o pont
 
 **2. Distribuição desigual de partição no tópico `audit-events`.** Depois da carga:
 
-```
-partição 0:          3 mensagens
-partição 1:          0 mensagens
-partição 2:  1.320.709 mensagens
+```mermaid
+xychart-beta
+  title "Exemplo de distribuição anterior em audit-events"
+  x-axis ["partição 0", "partição 1", "partição 2"]
+  y-axis "mensagens" 0 --> 1400000
+  bar [3, 0, 1320709]
 ```
 
-A chave da mensagem é o **nome do app**, então todos os logs de um serviço têm a mesma
-chave e caem sempre na mesma partição. As outras duas ficam ociosas, e o paralelismo do
-App C fica preso em 1 consumidor por app — por mais que se aumente `concurrency`.
+A chave dos logs do `order-service` é o **nome do app**, então todos os logs desse serviço
+têm a mesma chave e caem sempre na mesma partição. As outras duas ficam ociosas, e o
+paralelismo do App C fica preso em 1 consumidor por app — por mais que se aumente
+`concurrency`. Os alertas do `fraud-service` usam `customerId`, conforme documentado na
+tabela de contratos acima.
 
 Foi uma escolha ruim de chave da minha parte: ela preserva a ordem cronológica dos logs
 de cada serviço, mas o custo é desproporcional. Para logs, a ordem global por app raramente
@@ -405,9 +391,9 @@ Ficou como exercício explícito, não como esquecimento.
 mvn test
 ```
 
-140 testes. Os mais interessantes são os **de contrato**: a mesma bateria, escrita puramente
+108 testes. Os mais interessantes são os **de contrato**: a mesma bateria, escrita puramente
 em vocabulário de domínio, roda contra todas as implementações de cada Port —
-`{ProductSales, CustomerPattern, OrderLedger} × {inMemory, SQLite, DuckDB}` no App B e
+`{ProductSales, OrderLedger} × {inMemory, SQLite, DuckDB}` no App B e
 `AuditRepository × {JSONL, DuckDB}` no App C.
 
 Se algum desses testes precisasse de um `if (isSqlite)`, seria a prova de que o Port foi
@@ -421,31 +407,33 @@ nada — é o retorno prático de tê-lo isolado.
 
 ## Estrutura
 
-```
-training_kafka/
-├── docker-compose.yml            Kafka (KRaft) + Kafka UI
-├── pom.xml                       POM raiz: versões, sem herdar do Spring Boot parent
-├── data/                         arquivos gerados em runtime (gitignored)
-│
-├── order-service/                App A
-│   ├── order-service-domain/         Order, Money, Quantity, Violations
-│   ├── order-service-application/    PlaceOrderService
-│   ├── order-service-adapters/       REST, Kafka
-│   └── order-service-bootstrap/      main, application.yml, wiring, facades
-│
-├── metrics-consumer/             App B
-│   ├── metrics-consumer-domain/      3 agregados, 4 Ports
-│   ├── metrics-consumer-application/ OrderPlacedHandler, MetricsQueryService
-│   ├── metrics-consumer-adapters/    Kafka, REST, 9 implementações de repositório
-│   └── metrics-consumer-bootstrap/   main, application.yml, wiring, facades
-│
-├── audit-service/               App C
-│   ├── audit-service-domain/        AuditEvent, AuditFilter, AuditRepository
-│   ├── audit-service-application/   IngestAuditService, AuditQueryService
-│   ├── audit-service-adapters/      Kafka, REST, 3 implementações
-│   └── audit-service-bootstrap/     main, application.yml, wiring, facades
-│
-└── load-tests/                   k6 + faker, empacotado com esbuild
+```mermaid
+flowchart TD
+  Root[training_kafka]
+  Root --> Infra[docker-compose.yml<br/>Kafka KRaft + Kafka UI]
+  Root --> Build[pom.xml<br/>POM raiz]
+  Root --> Data[data/<br/>arquivos de runtime]
+  Root --> Order[order-service<br/>App A]
+  Order --> OrderDomain[order-service-domain<br/>domínio]
+  Order --> OrderApplication[order-service-application<br/>PlaceOrderService]
+  Order --> OrderAdapters[order-service-adapters<br/>REST + Kafka]
+  Order --> OrderBootstrap[order-service-bootstrap<br/>main + wiring]
+  Root --> Metrics[metrics-consumer<br/>App B]
+  Metrics --> MetricsDomain[metrics-consumer-domain<br/>2 agregados + 2 Ports]
+  Metrics --> MetricsApplication[metrics-consumer-application<br/>handler + queries]
+  Metrics --> MetricsAdapters[metrics-consumer-adapters<br/>Kafka + REST + repositories]
+  Metrics --> MetricsBootstrap[metrics-consumer-bootstrap<br/>main + wiring]
+  Root --> Audit[audit-service<br/>App C]
+  Audit --> AuditDomain[audit-service-domain<br/>AuditEvent + filtros]
+  Audit --> AuditApplication[audit-service-application<br/>ingestão + queries]
+  Audit --> AuditAdapters[audit-service-adapters<br/>Kafka + REST + persistência]
+  Audit --> AuditBootstrap[audit-service-bootstrap<br/>main + wiring]
+  Root --> Fraud[fraud-service<br/>App D]
+  Fraud --> FraudDomain[fraud-service-domain<br/>CustomerFraudPattern]
+  Fraud --> FraudApplication[fraud-service-application<br/>FraudDetectionService]
+  Fraud --> FraudAdapters[fraud-service-adapters<br/>contratos + state store]
+  Fraud --> FraudBootstrap[fraud-service-bootstrap<br/>main + topology]
+  Root --> Load[load-tests<br/>k6 + faker + esbuild]
 ```
 
 ## Endpoints

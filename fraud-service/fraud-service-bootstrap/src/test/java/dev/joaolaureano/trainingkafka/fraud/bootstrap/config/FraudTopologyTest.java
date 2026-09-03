@@ -1,6 +1,7 @@
 package dev.joaolaureano.trainingkafka.fraud.bootstrap.config;
 
 import dev.joaolaureano.trainingkafka.fraud.adapters.messaging.AuditEventMessage;
+import dev.joaolaureano.trainingkafka.fraud.adapters.messaging.FraudDetectedMessage;
 import dev.joaolaureano.trainingkafka.fraud.adapters.messaging.OrderPlacedMessage;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.Serdes.StringSerde;
@@ -29,6 +30,7 @@ class FraudTopologyTest {
     private TopologyTestDriver driver;
     private TestInputTopic<String, OrderPlacedMessage> input;
     private TestOutputTopic<String, AuditEventMessage> output;
+    private TestOutputTopic<String, FraudDetectedMessage> fraudEvents;
 
     @BeforeEach
     void setUp() {
@@ -36,6 +38,7 @@ class FraudTopologyTest {
         StreamsBuilder builder = new StreamsBuilder();
         JsonSerde<OrderPlacedMessage> orderSerde = new JsonSerde<>(OrderPlacedMessage.class);
         JsonSerde<AuditEventMessage> auditSerde = new JsonSerde<>(AuditEventMessage.class);
+        JsonSerde<FraudDetectedMessage> fraudSerde = new JsonSerde<>(FraudDetectedMessage.class);
         topologyConfiguration.fraudStream(builder, new FraudProperties(5, Duration.ofSeconds(10), Duration.ofSeconds(2)));
 
         Properties properties = new Properties();
@@ -46,6 +49,8 @@ class FraudTopologyTest {
         driver = new TopologyTestDriver(topology, properties);
         input = driver.createInputTopic("orders", new StringSerde().serializer(), orderSerde.serializer());
         output = driver.createOutputTopic("audit-events", new StringSerde().deserializer(), auditSerde.deserializer());
+        fraudEvents = driver.createOutputTopic("fraud-events", new StringSerde().deserializer(),
+                fraudSerde.deserializer());
     }
 
     @AfterEach
@@ -67,6 +72,37 @@ class FraudTopologyTest {
     }
 
     @Test
+    void publishesTheWholeWindowForCompensation() {
+        for (int index = 0; index < 5; index++) {
+            input.pipeInput("cust-1", order("order-" + index, "cust-1", index));
+        }
+
+        assertThat(fraudEvents.getQueueSize()).isEqualTo(1);
+        var detected = fraudEvents.readKeyValue();
+        assertThat(detected.key).isEqualTo("cust-1");
+        assertThat(detected.value.customerId()).isEqualTo("cust-1");
+        assertThat(detected.value.ordersInWindow()).isEqualTo(5);
+        // A janela INTEIRA, não uma amostra: compensar metade da rajada seria pior
+        // do que não compensar.
+        assertThat(detected.value.orders())
+                .extracting(FraudDetectedMessage.FraudulentOrder::orderId)
+                .containsExactly("order-0", "order-1", "order-2", "order-3", "order-4");
+        assertThat(detected.value.orders())
+                .allSatisfy(order -> assertThat(order.amount()).isEqualByComparingTo(BigDecimal.TEN));
+    }
+
+    @Test
+    void theAlertKeepsCarryingOnlyASample() {
+        for (int index = 0; index < 7; index++) {
+            input.pipeInput("cust-1", order("order-" + index, "cust-1", index));
+        }
+
+        // O tópico de auditoria não mudou de formato: continua com no máximo 5 ids.
+        assertThat(output.readKeyValue().value.context().get("sampleOrderIds").split(","))
+                .hasSize(5);
+    }
+
+    @Test
     void duplicateOrderDoesNotCountTwice() {
         for (int index = 0; index < 4; index++) {
             input.pipeInput("cust-1", order("order-" + index, "cust-1", index));
@@ -74,6 +110,7 @@ class FraudTopologyTest {
         input.pipeInput("cust-1", order("order-3", "cust-1", 4));
 
         assertThat(output.isEmpty()).isTrue();
+        assertThat(fraudEvents.isEmpty()).isTrue();
     }
 
     @Test

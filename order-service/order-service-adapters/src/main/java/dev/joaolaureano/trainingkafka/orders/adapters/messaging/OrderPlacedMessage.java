@@ -21,7 +21,7 @@ public record OrderPlacedMessage(
         String occurredAt
 ) {
 
-    static OrderPlacedMessage from(OrderPlaced event) {
+    public static OrderPlacedMessage from(OrderPlaced event) {
         return new OrderPlacedMessage(
                 event.orderId().toString(),
                 event.customerId().value(),

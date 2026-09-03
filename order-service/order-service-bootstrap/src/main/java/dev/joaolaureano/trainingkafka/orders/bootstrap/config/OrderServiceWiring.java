@@ -1,20 +1,34 @@
 package dev.joaolaureano.trainingkafka.orders.bootstrap.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.joaolaureano.trainingkafka.orders.adapters.messaging.KafkaActivityLogPublisher;
-import dev.joaolaureano.trainingkafka.orders.adapters.messaging.KafkaOrderEventPublisher;
+import dev.joaolaureano.trainingkafka.orders.adapters.messaging.OrderEventOutboxTranslator;
+import dev.joaolaureano.trainingkafka.orders.adapters.messaging.KafkaOutboxDispatcher;
+import dev.joaolaureano.trainingkafka.orders.adapters.messaging.OutboxRelay;
+import dev.joaolaureano.trainingkafka.orders.adapters.persistence.OutboxDispatcher;
+import dev.joaolaureano.trainingkafka.orders.adapters.persistence.OutboxStore;
+import dev.joaolaureano.trainingkafka.orders.adapters.persistence.OutboxTranslator;
+import dev.joaolaureano.trainingkafka.orders.adapters.persistence.SqliteOrderRepository;
 import dev.joaolaureano.trainingkafka.orders.adapters.web.PlaceOrderPort;
 import dev.joaolaureano.trainingkafka.orders.application.PlaceOrderService;
 import dev.joaolaureano.trainingkafka.orders.application.PlaceOrderUseCase;
 import dev.joaolaureano.trainingkafka.orders.application.port.ActivityLogPublisher;
 import dev.joaolaureano.trainingkafka.orders.bootstrap.facade.ActivityLogFacade;
 import dev.joaolaureano.trainingkafka.orders.bootstrap.facade.PlaceOrderFacade;
-import dev.joaolaureano.trainingkafka.orders.domain.port.OrderEventPublisher;
+import dev.joaolaureano.trainingkafka.orders.domain.port.OrderRepository;
+import dev.joaolaureano.trainingkafka.orders.application.ApplyPaymentResult;
+import dev.joaolaureano.trainingkafka.orders.adapters.messaging.PaymentEventPort;
+import dev.joaolaureano.trainingkafka.orders.bootstrap.facade.PaymentEventFacade;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.KafkaTemplate;
 
 import java.time.Clock;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.DriverManager;
 
 /**
  * O ponto de montagem do sistema.
@@ -42,9 +56,55 @@ public class OrderServiceWiring {
         return Clock.systemUTC();
     }
 
+    @Bean(destroyMethod = "close")
+    public Connection orderConnection(
+            @Value("${order.persistence.sqlite.path:data/orders.db}") String path) {
+        try {
+            Path parent = Path.of(path).toAbsolutePath().getParent();
+            if (parent != null) Files.createDirectories(parent);
+            Connection connection = DriverManager.getConnection("jdbc:sqlite:" + path);
+            connection.setAutoCommit(false);
+            return connection;
+        } catch (java.sql.SQLException | java.io.IOException failure) {
+            throw new IllegalStateException("Could not open order database", failure);
+        }
+    }
+
     @Bean
-    public OrderEventPublisher orderEventPublisher(KafkaTemplate<String, Object> kafkaTemplate) {
-        return new KafkaOrderEventPublisher(kafkaTemplate);
+    public OutboxTranslator outboxTranslator(ObjectMapper objectMapper) {
+        return new OrderEventOutboxTranslator(objectMapper);
+    }
+
+    /**
+     * Um único objeto implementa {@code OrderRepository} e {@code OutboxStore} —
+     * é o que garante que o pedido e o seu evento entrem na mesma transação.
+     */
+    @Bean
+    public SqliteOrderRepository sqliteOrderRepository(Connection connection, OutboxTranslator translator) {
+        return new SqliteOrderRepository(connection, translator);
+    }
+
+    @Bean
+    public OrderRepository orderRepository(SqliteOrderRepository repository) {
+        return repository;
+    }
+
+    @Bean
+    public OutboxStore outboxStore(SqliteOrderRepository repository) {
+        return repository;
+    }
+
+    @Bean
+    public OutboxDispatcher outboxDispatcher(KafkaTemplate<String, Object> kafkaTemplate,
+                                             ObjectMapper objectMapper,
+                                             @Value("${order.outbox.send-timeout-seconds:10}") long sendTimeout) {
+        return new KafkaOutboxDispatcher(kafkaTemplate, objectMapper, sendTimeout);
+    }
+
+    @Bean
+    public OutboxRelay outboxRelay(OutboxStore outbox, OutboxDispatcher dispatcher,
+                                   @Value("${order.outbox.batch-size:100}") int batchSize) {
+        return new OutboxRelay(outbox, dispatcher, batchSize);
     }
 
     @Bean
@@ -60,14 +120,24 @@ public class OrderServiceWiring {
     }
 
     @Bean
-    public PlaceOrderUseCase placeOrderUseCase(OrderEventPublisher orderEventPublisher,
+    public PlaceOrderUseCase placeOrderUseCase(OrderRepository orders,
                                                ActivityLogPublisher activityLogPublisher,
                                                Clock clock) {
-        return new PlaceOrderService(orderEventPublisher, activityLogPublisher, clock);
+        return new PlaceOrderService(orders, activityLogPublisher, clock);
     }
 
     @Bean
     public PlaceOrderPort placeOrderPort(PlaceOrderUseCase placeOrderUseCase) {
         return new PlaceOrderFacade(placeOrderUseCase);
+    }
+
+    @Bean
+    public ApplyPaymentResult applyPaymentResult(OrderRepository orders) {
+        return new ApplyPaymentResult(orders);
+    }
+
+    @Bean
+    public PaymentEventPort paymentEventPort(ApplyPaymentResult applyResult) {
+        return new PaymentEventFacade(applyResult);
     }
 }

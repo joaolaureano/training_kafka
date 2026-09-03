@@ -6,7 +6,9 @@ import dev.joaolaureano.trainingkafka.orders.application.port.AuditLevel;
 import dev.joaolaureano.trainingkafka.orders.domain.event.DomainEvent;
 import dev.joaolaureano.trainingkafka.orders.domain.event.OrderPlaced;
 import dev.joaolaureano.trainingkafka.orders.domain.model.InvalidOrderException;
-import dev.joaolaureano.trainingkafka.orders.domain.port.OrderEventPublisher;
+import dev.joaolaureano.trainingkafka.orders.domain.model.Order;
+import dev.joaolaureano.trainingkafka.orders.domain.model.OrderId;
+import dev.joaolaureano.trainingkafka.orders.domain.port.OrderRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,7 +18,10 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -30,19 +35,29 @@ class PlaceOrderServiceTest {
 
     private static final Instant NOW = Instant.parse("2026-08-25T12:00:00Z");
 
-    private RecordingEventPublisher events;
+    private RecordingRepository events;
     private RecordingLogPublisher logs;
     private PlaceOrderService service;
 
     @BeforeEach
     void setUp() {
-        events = new RecordingEventPublisher();
+        events = new RecordingRepository();
         logs = new RecordingLogPublisher();
         service = new PlaceOrderService(events, logs, Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
     @Test
-    @DisplayName("publica OrderPlaced e devolve a identidade gerada")
+    @DisplayName("grava o pedido em PENDING_PAYMENT junto com o evento")
+    void persistsOrderWithEvent() {
+        var orderId = service.handle(new PlaceOrderCommand("cust-1", "Teclado", 2, new BigDecimal("199.90")));
+
+        assertThat(events.saved.get(orderId).status())
+                .isEqualTo(dev.joaolaureano.trainingkafka.orders.domain.model.OrderStatus.PENDING_PAYMENT);
+        assertThat(events.published).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("enfileira OrderPlaced e devolve a identidade gerada")
     void publishesEvent() {
         var orderId = service.handle(new PlaceOrderCommand("cust-1", "Teclado", 2, new BigDecimal("199.90")));
 
@@ -99,7 +114,7 @@ class PlaceOrderServiceTest {
     }
 
     @Test
-    @DisplayName("pedido recusado não produz evento algum no tópico de pedidos")
+    @DisplayName("pedido recusado não produz evento nem linha de outbox")
     void rejectedOrderPublishesNoEvent() {
         assertThatThrownBy(() -> service.handle(
                 new PlaceOrderCommand("", "Teclado", 1, new BigDecimal("10.00"))))
@@ -117,12 +132,29 @@ class PlaceOrderServiceTest {
         assertThat(logs.published.getFirst().occurredAt()).isEqualTo(NOW);
     }
 
-    private static final class RecordingEventPublisher implements OrderEventPublisher {
+    /**
+     * O caso de uso não publica mais: ele grava o pedido e seus eventos na mesma
+     * chamada. O fake registra os dois lados para que o teste possa afirmar que o
+     * evento foi enfileirado JUNTO do pedido, e não depois dele.
+     */
+    private static final class RecordingRepository implements OrderRepository {
         private final List<DomainEvent> published = new ArrayList<>();
+        private final Map<OrderId, Order> saved = new HashMap<>();
 
         @Override
-        public void publish(DomainEvent event) {
-            published.add(event);
+        public Optional<Order> findById(OrderId orderId) {
+            return Optional.ofNullable(saved.get(orderId));
+        }
+
+        @Override
+        public void save(Order order, List<DomainEvent> events) {
+            saved.put(order.id(), order);
+            published.addAll(events);
+        }
+
+        @Override
+        public void save(Order order) {
+            save(order, List.of());
         }
     }
 

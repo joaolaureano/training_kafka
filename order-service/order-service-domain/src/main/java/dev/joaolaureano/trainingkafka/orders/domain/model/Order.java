@@ -24,17 +24,19 @@ public class Order {
     private final Quantity quantity;
     private final Money amount;
     private final Instant placedAt;
+    private OrderStatus status;
 
     private final List<DomainEvent> pendingEvents = new ArrayList<>();
 
     private Order(OrderId id, CustomerId customerId, ProductId productId,
-                  Quantity quantity, Money amount, Instant placedAt) {
+                  Quantity quantity, Money amount, Instant placedAt, OrderStatus status) {
         this.id = id;
         this.customerId = customerId;
         this.productId = productId;
         this.quantity = quantity;
         this.amount = amount;
         this.placedAt = placedAt;
+        this.status = status;
     }
 
     /**
@@ -74,10 +76,64 @@ public class Order {
         violations.throwIfAny();
 
         Order order = new Order(OrderId.generate(), customer, productId,
-                orderedQuantity, orderAmount, placedAt);
+            orderedQuantity, orderAmount, placedAt, OrderStatus.PENDING_PAYMENT);
         order.pendingEvents.add(new OrderPlaced(
                 order.id, customer, productId, orderedQuantity, orderAmount, placedAt));
         return order;
+    }
+
+    public static Order reconstitute(OrderId id, CustomerId customerId, ProductId productId,
+                                     Quantity quantity, Money amount, Instant placedAt,
+                                     OrderStatus status) {
+        if (id == null || status == null) {
+            throw new InvalidOrderException("order state is incomplete");
+        }
+        return new Order(id, customerId, productId, quantity, amount, placedAt, status);
+    }
+
+    /**
+     * O pagamento foi aprovado.
+     *
+     * Reentregar o mesmo PaymentApproved é normal — o consumidor é at-least-once —
+     * e o segundo apply não faz nada. Já aprovar um pedido CANCELLED não é
+     * duplicata: é contradição, e recusar é o que impede a Saga de terminar num
+     * estado que nenhuma sequência de eventos legítima produziria.
+     */
+    public void approvePayment() {
+        if (status == OrderStatus.PAID) {
+            return;
+        }
+        if (status != OrderStatus.PENDING_PAYMENT) {
+            throw new InvalidOrderTransitionException(id, status, OrderStatus.PAID);
+        }
+        status = OrderStatus.PAID;
+    }
+
+    /**
+     * A compensação por fraude, que chega DEPOIS de o pedido já estar pago.
+     *
+     * É a única transição que sai de PAID, e existe separada de
+     * {@link #cancelForPaymentFailure()} de propósito: cancelar um pedido pago
+     * porque o pagamento falhou é contradição, cancelá-lo porque a fraude foi
+     * detectada depois é fluxo legítimo. Um método só, permissivo, apagaria a
+     * diferença — e com ela a guarda que protege a Saga.
+     */
+    public void cancelForFraud() {
+        if (status == OrderStatus.CANCELLED) {
+            return;
+        }
+        status = OrderStatus.CANCELLED;
+    }
+
+    /** A compensação da Saga: o pagamento falhou, o pedido não se sustenta. */
+    public void cancelForPaymentFailure() {
+        if (status == OrderStatus.CANCELLED) {
+            return;
+        }
+        if (status != OrderStatus.PENDING_PAYMENT) {
+            throw new InvalidOrderTransitionException(id, status, OrderStatus.CANCELLED);
+        }
+        status = OrderStatus.CANCELLED;
     }
 
     /** Devolve os fatos acumulados e esvazia a lista — chamado uma única vez, pela aplicação. */
@@ -113,6 +169,10 @@ public class Order {
 
     public Instant placedAt() {
         return placedAt;
+    }
+
+    public OrderStatus status() {
+        return status;
     }
 
     /** Agregados têm identidade: dois Order são o mesmo se têm o mesmo id. */

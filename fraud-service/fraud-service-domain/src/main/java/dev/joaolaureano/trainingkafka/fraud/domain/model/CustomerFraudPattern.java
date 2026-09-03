@@ -12,8 +12,6 @@ import java.util.Set;
 
 public final class CustomerFraudPattern {
 
-    private static final int SAMPLE_SIZE = 5;
-
     private final String customerId;
     private final FraudPolicy policy;
     private final List<FraudOrder> recentOrders;
@@ -54,12 +52,12 @@ public final class CustomerFraudPattern {
         knownOrderIds.add(order.orderId());
 
         if (!wasFraudulent && isFraudulent()) {
-            return Optional.of(new FraudDetected(customerId, recentOrders.size(), policy.window(),
+            // A janela inteira: é a lista de pedidos que precisam ser compensados.
+            return Optional.of(new FraudDetected(customerId, policy.window(),
                     recentOrders.stream()
                             .sorted(Comparator.comparing(FraudOrder::occurredAt))
-                            .skip(Math.max(0, recentOrders.size() - SAMPLE_SIZE))
-                            .map(FraudOrder::orderId)
-                            .toList(), order.occurredAt()));
+                            .toList(),
+                    order.occurredAt()));
         }
         return Optional.empty();
     }

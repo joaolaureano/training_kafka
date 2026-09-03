@@ -2,6 +2,7 @@ package dev.joaolaureano.trainingkafka.orders.bootstrap;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * Ponto de entrada do processo.
@@ -13,6 +14,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * {@link dev.joaolaureano.trainingkafka.orders.bootstrap.config.OrderServiceWiring}.
  */
 @SpringBootApplication(scanBasePackages = "dev.joaolaureano.trainingkafka.orders")
+@EnableScheduling // o relay do outbox roda em intervalo fixo
 public class OrderServiceBootstrap {
 
     public static void main(String[] args) {

@@ -18,6 +18,42 @@ spring:
         # Preserva a ordem por partição mesmo com retentativa.
         max.in.flight.requests.per.connection: 1
         enable.idempotence: true
+    consumer:
+      group-id: order-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.value.default.type: dev.joaolaureano.trainingkafka.orders.adapters.messaging.PaymentEventMessage
+        spring.json.use.type.headers: false
+        spring.json.trusted.packages: dev.joaolaureano.trainingkafka.orders.adapters.messaging
+
+order:
+  payment:
+    # Grupo próprio: o consumo de payment-events é independente do de qualquer
+    # outro tópico e precisa do próprio offset.
+    group-id: ${ORDER_PAYMENT_GROUP_ID:order-service-payment}
+  persistence:
+    sqlite:
+      path: ${ORDER_DB_PATH:data/orders.db}
+  outbox:
+    relay-interval-ms: 500
+    batch-size: 100
+    send-timeout-seconds: 10
+
+kafka:
+  dlq:
+    enabled: true
+    topic-suffix: -dlt
+    create-topics: true
+    partitions: 3
+    replicas: 1
+    retry:
+      attempts: 2
+      initial-interval: 1s
+      multiplier: 2.0
+      max-interval: 10s
 
 server:
   port: 8080

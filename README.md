@@ -1,6 +1,6 @@
 # training_kafka
 
-Laboratório de Engenharia de Dados: quatro microsserviços Spring Boot ligados por Kafka,
+Laboratório de Engenharia de Dados: cinco microsserviços Spring Boot ligados por Kafka,
 modelados com **DDD tático** e **Ports & Adapters**, com carga gerada por k6.
 
 O objetivo aqui não é o produto — é o desenho. A regra que governa tudo:
@@ -23,16 +23,163 @@ flowchart LR
     Metrics -->|métricas de venda| MetricsApi[REST /metrics]
     Fraud -->|FraudDetected<br/>audit-events| Audit[App C<br/>audit-service<br/>:8082]
     Order -->|logs estruturados<br/>audit-events| Audit
+    Order -->|OrderPlaced<br/>orders| Payment[App E<br/>payment-service<br/>Saga]
+    Payment -->|PaymentApproved / PaymentFailed<br/>PaymentCancelled<br/>payment-events<br/>key: orderId| Order
+    Fraud -->|FraudDetected<br/>fraud-events<br/>key: customerId| Payment
 ```
 
-## Os quatro serviços
+## Os cinco serviços
 
 | App | Módulo | Porta | O que faz |
 |---|---|---|---|
-| **A** | `order-service` | 8080 | Recebe pedidos por HTTP, valida no domínio, publica em `orders` (particionado por `customerId`) e registra logs estruturados |
+| **A** | `order-service` | 8080 | Recebe pedidos por HTTP, valida no domínio, grava em SQLite, publica em `orders` via outbox e reage ao resultado do pagamento |
 | **B** | `metrics-consumer` | 8081 | Consome `orders` e acumula métricas de venda |
 | **C** | `audit-service` | 8082 | Consome `audit-events`, persiste e responde consultas por nível/app/período |
-| **D** | `fraud-service` | — | Processa `orders` com Kafka Streams e publica alertas em `audit-events` |
+| **D** | `fraud-service` | — | Processa `orders` com Kafka Streams, alerta em `audit-events` e dispara compensação em `fraud-events` |
+| **E** | `payment-service` | — | Consome `orders`, cobra num gateway simulado, publica o desfecho em `payment-events` e estorna ao receber `fraud-events` |
+
+## A Saga de pagamento
+
+O pedido nasce em `PENDING_PAYMENT` e só sai desse estado quando o contexto de
+Payment disser o que aconteceu. Não há chamada síncrona entre os dois, nem
+transação distribuída, nem banco compartilhado: é uma **Saga coreografada**, onde
+cada lado é dono do próprio estado e reage a fatos.
+
+```mermaid
+sequenceDiagram
+    participant C as Cliente
+    participant O as App A<br/>order-service
+    participant DB as SQLite (orders + outbox)
+    participant K as Kafka
+    participant P as App E<br/>payment-service
+    participant G as Gateway simulado
+
+    C->>O: POST /orders
+    O->>DB: Order(PENDING_PAYMENT) + OrderPlaced<br/>UM commit
+    O-->>C: 202 Accepted
+    Note over DB,K: relay do outbox, assíncrono
+    DB->>K: OrderPlaced (orders, key=customerId)
+    K->>P: OrderPlaced
+    P->>P: Payment(PENDING), idempotente por orderId
+    P->>G: charge()
+    G-->>P: aprovado / recusado
+    P->>K: PaymentApproved | PaymentFailed<br/>(payment-events, key=orderId)
+    K->>O: resultado
+    O->>DB: PAID ou CANCELLED
+```
+
+A compensação é o caminho de baixo: `PaymentFailed` leva o pedido de
+`PENDING_PAYMENT` a `CANCELLED`. Quem executa é o **order-service**, porque o
+pedido é dono do próprio ciclo de vida — o payment-service nunca escreve no estado
+do pedido.
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING_PAYMENT: Order.place
+    PENDING_PAYMENT --> PAID: PaymentApproved
+    PENDING_PAYMENT --> CANCELLED: PaymentFailed (compensação)
+    PAID --> CANCELLED: PaymentCancelled (fraude)
+    PENDING_PAYMENT --> CANCELLED: PaymentCancelled (fraude)
+    PAID --> PAID: PaymentApproved reentregue
+    CANCELLED --> CANCELLED: resultado reentregue
+```
+
+Transição contraditória — aprovar um pedido cancelado, cancelar um pago — levanta
+`InvalidOrderTransitionException`, que é erro **permanente** e vai direto para a
+DLQ. Reentrega do mesmo resultado é no-op. A diferença importa: engolir as duas
+em silêncio faria a Saga terminar em estados que nenhuma sequência legítima de
+eventos produz.
+
+### Por que outbox
+
+Gravar o pedido e publicar `OrderPlaced` são dois recursos diferentes. Feitos em
+sequência, existe uma janela: processo morto no meio deixa um pedido
+`PENDING_PAYMENT` que ninguém jamais pagaria — a Saga trava sem nenhum sinal.
+
+O outbox fecha isso escrevendo o evento numa tabela do **mesmo** SQLite, no mesmo
+commit do pedido. Um relay agendado drena a tabela para o Kafka, em ordem de
+sequência, parando no primeiro erro. Broker fora do ar atrasa a entrega; não a
+perde nem a embaralha.
+
+O preço é **at-least-once**: morrer entre o ack do broker e a baixa da linha
+reemite o evento. É por isso que o payment-service é idempotente por `orderId` —
+duplicata não gera segunda cobrança. Exactly-once exigiria uma transação
+englobando Kafka e SQLite, que não existe.
+
+**O payment-service tem o mesmo outbox**, e pelo mesmo motivo. O desfecho da
+cobrança e o `PaymentApproved`/`PaymentFailed`/`PaymentCancelled` correspondente
+entram no SQLite dele num commit só; o relay entrega depois. Sem isso, um processo
+morto entre gravar e publicar deixaria um pagamento resolvido cujo resultado
+ninguém soube — e o pedido preso do outro lado, sem nada que o destravasse.
+
+Com o outbox nos dois lados, a reentrega ficou mais simples: um `OrderPlaced`
+repetido sobre um pagamento já resolvido apenas **retorna**. Não precisa reemitir
+nada, porque se o pagamento está gravado o evento dele está na mesma transação —
+ou já saiu, ou o relay ainda vai entregar.
+
+A ordem importa mais deste lado: o relay para na primeira falha, e é isso que
+impede um `PaymentCancelled` de ultrapassar o `PaymentApproved` do mesmo pedido.
+Fora de ordem, o order-service veria um cancelamento de um pedido que para ele
+ainda nem foi pago — e mandaria para a DLQ, corretamente.
+
+### Compensação por fraude
+
+A fraude é detectada **depois** do pagamento, e isso não é um defeito do desenho:
+é a natureza do detector. [`CustomerFraudPattern`](fraud-service/fraud-service-domain/src/main/java/dev/joaolaureano/trainingkafka/fraud/domain/model/CustomerFraudPattern.java)
+avalia uma **janela** — só dispara quando o cliente cruza `maxOrders` num
+intervalo. O primeiro pedido de uma rajada é indistinguível de um pedido legítimo;
+não existe veredito a dar sobre ele isoladamente. Fazer o pagamento esperar o
+fraud seria esperar por eventos que ainda não aconteceram.
+
+Então o fraud não bloqueia: ele **compensa**.
+
+```mermaid
+sequenceDiagram
+    participant F as App D<br/>fraud-service
+    participant K as Kafka
+    participant P as App E<br/>payment-service
+    participant O as App A<br/>order-service
+
+    Note over F: janela do cliente cruza o limite
+    F->>K: FraudDetected (fraud-events, key=customerId)<br/>com a janela INTEIRA
+    K->>P: FraudDetected
+    loop cada pedido da janela
+        P->>P: Payment.cancelForFraud()<br/>refunded = estava APPROVED?
+        P->>K: PaymentCancelled (payment-events, key=orderId)
+    end
+    K->>O: PaymentCancelled
+    O->>O: Order.cancelForFraud()<br/>PAID → CANCELLED
+```
+
+Quatro decisões que sustentam isso:
+
+**Não é rollback.** Nada é desfeito — o pagamento commitou, o pedido foi pago.
+`PaymentCancelled` é um movimento **novo**, no sentido inverso, e carrega
+`refunded` para não mentir: se o pagamento ainda estava `PENDING`, nada saiu e
+nada é estornado; se estava `APPROVED`, houve estorno de fato.
+
+**A cadeia passa pelo Payment, não em paralelo.** O fraud não fala com o
+order-service. O pedido continua mudando de estado só por evento do contexto que é
+dono do dinheiro — uma fonte de verdade, e nenhuma corrida entre cancelar o pedido
+e estornar a cobrança.
+
+**`cancelForFraud()` é um método separado de `cancelForPaymentFailure()`.**
+`PAID → CANCELLED` é a única saída de `PAID`, e é legítima *apenas* por fraude.
+Um método único e permissivo apagaria a diferença entre isso e um resultado de
+pagamento contraditório — que continua levantando `InvalidOrderTransitionException`.
+
+**O evento carrega a janela inteira, não a amostra.** `FraudDetected` alimentava
+só o alerta e cinco `orderId` bastavam para dar contexto a quem lesse o log.
+Compensar metade de uma rajada deixaria pedidos fraudulentos pagos — pior do que
+não compensar. O valor de cada pedido viaja junto porque o payment pode ainda não
+ter visto o `OrderPlaced`: nesse caso ele registra o pagamento **já cancelado**, o
+que fecha a porta para a cobrança que ainda está a caminho.
+
+### O que o fraud-service continua não fazendo
+
+Ele não **autoriza**. Não há chamada síncrona do payment para o fraud, e o gateway
+do App E tem regra própria e determinística (um limite de valor), documentada como
+simulação. O fraud age depois, por evento, ou não age.
 
 ### Fraud com Kafka Streams
 
@@ -86,6 +233,7 @@ Para executar apenas o detector:
 
 ```bash
 java -jar fraud-service/fraud-service-bootstrap/target/fraud-service-bootstrap-0.1.0-SNAPSHOT.jar
+java -jar payment-service/payment-service-bootstrap/target/payment-service-bootstrap-0.1.0-SNAPSHOT.jar
 ```
 
 Testes de domínio e topology usam JUnit e `TopologyTestDriver`, cobrindo threshold,
@@ -138,7 +286,9 @@ não consegue anunciar um endereço válido para os dois lados ao mesmo tempo.
 
 A auto-criação de tópicos está **desligada** de propósito: assim um nome errado falha alto,
 em vez de criar silenciosamente um tópico fantasma com 1 partição. Os tópicos são declarados
-pelo App A no boot, com 3 partições cada.
+pelo App A no boot, com 3 partições cada — `orders`, `audit-events` e
+`payment-events` e `fraud-events`. Os tópicos de dead letter (`<tópico>-dlt`) são
+criados por quem consome.
 
 ### 2. Build
 
@@ -146,7 +296,7 @@ pelo App A no boot, com 3 partições cada.
 mvn clean install
 ```
 
-### 3. Os quatro serviços
+### 3. Os cinco serviços
 
 Cada um numa aba de terminal:
 
@@ -155,6 +305,7 @@ java -jar order-service/order-service-bootstrap/target/order-service-bootstrap-0
 java -jar metrics-consumer/metrics-consumer-bootstrap/target/metrics-consumer-bootstrap-0.1.0-SNAPSHOT.jar
 java -jar audit-service/audit-service-bootstrap/target/audit-service-bootstrap-0.1.0-SNAPSHOT.jar
 java -jar fraud-service/fraud-service-bootstrap/target/fraud-service-bootstrap-0.1.0-SNAPSHOT.jar
+java -jar payment-service/payment-service-bootstrap/target/payment-service-bootstrap-0.1.0-SNAPSHOT.jar
 ```
 
 ### 4. Um pedido
@@ -415,8 +566,8 @@ flowchart TD
   Root --> Data[data/<br/>arquivos de runtime]
   Root --> Order[order-service<br/>App A]
   Order --> OrderDomain[order-service-domain<br/>domínio]
-  Order --> OrderApplication[order-service-application<br/>PlaceOrderService]
-  Order --> OrderAdapters[order-service-adapters<br/>REST + Kafka]
+  Order --> OrderApplication[order-service-application<br/>PlaceOrderService + Saga]
+  Order --> OrderAdapters[order-service-adapters<br/>REST + Kafka + outbox]
   Order --> OrderBootstrap[order-service-bootstrap<br/>main + wiring]
   Root --> Metrics[metrics-consumer<br/>App B]
   Metrics --> MetricsDomain[metrics-consumer-domain<br/>2 agregados + 2 Ports]
@@ -433,6 +584,11 @@ flowchart TD
   Fraud --> FraudApplication[fraud-service-application<br/>FraudDetectionService]
   Fraud --> FraudAdapters[fraud-service-adapters<br/>contratos + state store]
   Fraud --> FraudBootstrap[fraud-service-bootstrap<br/>main + topology]
+  Root --> Payment[payment-service<br/>App E]
+  Payment --> PaymentDomain[payment-service-domain<br/>Payment + eventos]
+  Payment --> PaymentApplication[payment-service-application<br/>ProcessOrderPayment]
+  Payment --> PaymentAdapters[payment-service-adapters<br/>Kafka + gateway + SQLite]
+  Payment --> PaymentBootstrap[payment-service-bootstrap<br/>main + wiring]
   Root --> Load[load-tests<br/>k6 + faker + esbuild]
 ```
 

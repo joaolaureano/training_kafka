@@ -23,6 +23,7 @@
     <module>metrics-consumer</module>
     <module>audit-service</module>
     <module>fraud-service</module>
+    <module>payment-service</module>
   </modules>
 
   <properties>

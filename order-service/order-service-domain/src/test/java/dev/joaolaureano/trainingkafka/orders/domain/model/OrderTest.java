@@ -38,6 +38,87 @@ class OrderTest {
             assertThat(order.quantity().value()).isEqualTo(2);
             assertThat(order.amount().amount()).isEqualByComparingTo("199.90");
             assertThat(order.placedAt()).isEqualTo(NOW);
+            assertThat(order.status()).isEqualTo(OrderStatus.PENDING_PAYMENT);
+        }
+
+        @Test
+        @DisplayName("reaplicar o mesmo resultado de pagamento não muda nada")
+        void paymentResultIsIdempotent() {
+            Order approved = validOrder();
+            approved.approvePayment();
+            approved.approvePayment();
+            assertThat(approved.status()).isEqualTo(OrderStatus.PAID);
+
+            Order cancelled = validOrder();
+            cancelled.cancelForPaymentFailure();
+            cancelled.cancelForPaymentFailure();
+            assertThat(cancelled.status()).isEqualTo(OrderStatus.CANCELLED);
+        }
+
+        @Test
+        @DisplayName("resultados contraditórios são recusados, não engolidos")
+        void contradictoryResultsAreRejected() {
+            Order paid = validOrder();
+            paid.approvePayment();
+            assertThatThrownBy(paid::cancelForPaymentFailure)
+                    .isInstanceOf(InvalidOrderTransitionException.class);
+            assertThat(paid.status()).isEqualTo(OrderStatus.PAID);
+
+            Order cancelled = validOrder();
+            cancelled.cancelForPaymentFailure();
+            assertThatThrownBy(cancelled::approvePayment)
+                    .isInstanceOf(InvalidOrderTransitionException.class);
+            assertThat(cancelled.status()).isEqualTo(OrderStatus.CANCELLED);
+        }
+
+        @Test
+        @DisplayName("fraude cancela até um pedido já pago — a única saída de PAID")
+        void fraudCancelsEvenAPaidOrder() {
+            Order order = validOrder();
+            order.approvePayment();
+
+            order.cancelForFraud();
+
+            assertThat(order.status()).isEqualTo(OrderStatus.CANCELLED);
+        }
+
+        @Test
+        @DisplayName("fraude reentregue não muda nada")
+        void fraudCancellationIsIdempotent() {
+            Order order = validOrder();
+            order.approvePayment();
+
+            order.cancelForFraud();
+            order.cancelForFraud();
+
+            assertThat(order.status()).isEqualTo(OrderStatus.CANCELLED);
+        }
+
+        @Test
+        @DisplayName("cancelar por fraude é permitido onde cancelar por falha seria contradição")
+        void fraudAndPaymentFailureAreDifferentTransitions() {
+            Order paid = validOrder();
+            paid.approvePayment();
+
+            assertThatThrownBy(paid::cancelForPaymentFailure)
+                    .isInstanceOf(InvalidOrderTransitionException.class);
+            paid.cancelForFraud();
+
+            assertThat(paid.status()).isEqualTo(OrderStatus.CANCELLED);
+        }
+
+        @Test
+        @DisplayName("reconstitui do banco preservando o estado")
+        void reconstitutesFromStorage() {
+            Order order = validOrder();
+            order.approvePayment();
+
+            Order loaded = Order.reconstitute(order.id(), order.customerId(), order.productId(),
+                    order.quantity(), order.amount(), order.placedAt(), order.status());
+
+            assertThat(loaded.status()).isEqualTo(OrderStatus.PAID);
+            assertThat(loaded).isEqualTo(order);
+            assertThat(loaded.pullDomainEvents()).isEmpty();
         }
 
         @Test

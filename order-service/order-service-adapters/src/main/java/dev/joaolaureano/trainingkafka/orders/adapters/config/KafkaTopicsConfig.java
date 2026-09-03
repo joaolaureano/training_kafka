@@ -35,4 +35,20 @@ public class KafkaTopicsConfig {
                 .replicas(REPLICAS)
                 .build();
     }
+
+    @Bean
+    public NewTopic fraudEventsTopic() {
+        return TopicBuilder.name(Topics.FRAUD_EVENTS)
+                .partitions(PARTITIONS)
+                .replicas(REPLICAS)
+                .build();
+    }
+
+    @Bean
+    public NewTopic paymentEventsTopic() {
+        return TopicBuilder.name(Topics.PAYMENT_EVENTS)
+                .partitions(PARTITIONS)
+                .replicas(REPLICAS)
+                .build();
+    }
 }

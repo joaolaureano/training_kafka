@@ -15,6 +15,15 @@ public record OrderId(UUID value) {
         return new OrderId(UUID.randomUUID());
     }
 
+    /** Reidrata a identidade vinda de fora — de uma linha do banco ou de uma mensagem. */
+    public static OrderId parse(String value) {
+        try {
+            return new OrderId(UUID.fromString(value));
+        } catch (IllegalArgumentException | NullPointerException malformed) {
+            throw new InvalidOrderException("orderId inválido: " + value);
+        }
+    }
+
     @Override
     public String toString() {
         return value.toString();

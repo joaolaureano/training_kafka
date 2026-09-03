@@ -365,22 +365,85 @@ java -jar .../audit-service-bootstrap-0.1.0-SNAPSHOT.jar --spring.profiles.activ
 
 ## Testes de carga
 
+
+O k6 mede duas coisas diferentes, e a segunda só passou a existir com a Saga.
+
+A primeira é a de sempre: latência e taxa de aceitação do `POST /orders`. A segunda é a
+**convergência** — uma amostra dos pedidos é consultada em `GET /orders/{id}` até chegar a
+um estado terminal. Isso importa porque `202` significa muito menos do que significava: o
+pedido nasce em `PENDING_PAYMENT` e tudo que interessa acontece depois. Um `p(95)` verde com
+o relay do outbox travado seria um teste passando sobre um sistema quebrado — e é
+exatamente o que os thresholds `saga_settled` e `fraud_compensations_observed` recusam a
+deixar passar.
+
+O cenário `fraud_compensation_check` é separado do `suspicious_burst` de propósito. Esperar
+o estorno bloquearia o VU por dezenas de segundos e mataria a rajada que ele existe para
+produzir; num cenário próprio, um cliente dedicado com janela limpa permite acompanhar o
+ciclo inteiro — `PENDING_PAYMENT`, `PAID`, `CANCELLED` — e provar que a compensação desfaz
+um pagamento que de fato aconteceu.
+
+> **Mais da metade dos pedidos do cenário normal é recusada pelo gateway, e isso está
+> certo.** O catálogo vai de 15 a 900 e a quantidade de 1 a 5, então ~52% passa de
+> `payment.gateway.approval-limit` (1000) e termina `CANCELLED` por `PaymentFailed`. Por
+> isso o teste exige que o pedido chegue a um estado *terminal*, não que chegue a `PAID`:
+> exigir `PAID` reprovaria o teste por metade dos pedidos estarem se comportando exatamente
+> como deveriam. Para ver mais aprovações, suba `PAYMENT_APPROVAL_LIMIT`.
+
+### Rodando
+
 ```bash
 cd load-tests
 npm install
-npm test                     # build + rampa completa (~3min30)
-npm run smoke                # versão curta, 5 VUs por 15s
+./run.sh                     # sobe tudo, roda a carga completa, desmonta
+./run.sh --smoke             # passagem curta (~40s), para validar a montagem
+```
+
+O `run.sh` faz a sequência inteira: Kafka pelo compose, `mvn install`, os cinco serviços em
+background, espera cada um ficar pronto, roda o k6 e desmonta no final — inclusive em
+Ctrl-C ou erro, porque um serviço órfão segurando a `:8080` faz a execução seguinte falhar
+por um motivo que não tem nada a ver com o teste.
+
+O script existe porque a Saga transformou isto num teste de **integração**. Não dá mais para
+medir só o POST: verificar convergência e compensação exige os cinco serviços e o broker no
+ar ao mesmo tempo, e essa montagem na mão é longa o bastante para alguém errar — e errar de
+um jeito que parece falha do sistema.
+
+Duas esperas nele não são paranoia:
+
+- **Prontidão por serviço.** App A, B e C respondem em `/actuator/health`; App D e E não têm
+  porta HTTP, então a prova de vida é a linha de boot do Spring no log.
+- **Rebalance do Kafka Streams.** Entre o `fraud-service` "subir" e a topology estar
+  consumindo existe o rebalance. Começar a carga antes disso faria a rajada inicial passar
+  sem ser vista, e o teste cobraria uma compensação que nunca teve chance de acontecer.
+
+Se preferir controlar a stack por fora, `--no-infra` e `--skip-build` pulam o compose e o
+build; `--keep` deixa tudo no ar para você inspecionar. Os logs de cada serviço ficam em
+`load-tests/logs/`.
+
+Rodando o k6 sozinho, sem o script:
+
+```bash
+npm test                     # build + rampa completa
+PROFILE=smoke npm test       # perfil curto
 ```
 
 O runtime do k6 não é Node e não resolve `node_modules`, então o script passa por um
 bundle com esbuild antes de rodar — é o que permite usar `@faker-js/faker`.
 
-Dois cenários simultâneos:
+### Os cenários
 
 - **`normal_traffic`** — rampa `10 → 100 → 500` VUs, cada requisição com cliente próprio.
-  Não deve acionar detecção nenhuma.
+  Não deve acionar detecção nenhuma. Uma amostra (`VERIFY_SAMPLE_RATE`, 2% por padrão) tem o
+  desfecho verificado; verificar todos transformaria o teste de carga num teste de polling.
 - **`suspicious_burst`** — 5 VUs martelando um pool fixo de 5 clientes, sem pausa, para
   acionar a janela do `fraud-service` de forma determinística e não por acidente estatístico.
+- **`fraud_compensation_check`** — um VU com cliente dedicado por iteração, acompanhando o
+  ciclo completo até o estorno.
+
+> A rajada de 3 minutos produz **poucos** estornos, não milhares — e isso é correto.
+> `CustomerFraudPattern.register()` só emite na transição de "não fraudulento" para
+> "fraudulento"; um cliente já sinalizado que segue comprando não gera evento novo. É por
+> isso que a verificação da compensação precisa de um cliente novo a cada iteração.
 
 Depois da carga, o efeito é visível nas duas pontas:
 
@@ -597,6 +660,7 @@ flowchart TD
 | Método | Endpoint | Descrição |
 |---|---|---|
 | `POST` | `:8080/orders` | Registra um pedido. `202` se aceito, `400` com a lista completa de violações se não |
+| `GET` | `:8080/orders/{id}` | Estado corrente do pedido: `PENDING_PAYMENT`, `PAID` ou `CANCELLED`. `404` se desconhecido |
 | `GET` | `:8081/metrics/top-products?limit=10` | Produtos mais vendidos |
 | `GET` | `:8081/metrics/revenue?hours=24&product=X` | Faturamento e ticket médio no período |
 | `GET` | `:8082/audit-events?level=WARN&app=X&limit=50` | Auditoria por severidade mínima, app e período |
@@ -605,6 +669,12 @@ flowchart TD
 `POST /orders` responde **202 Accepted**, e não 201: o pedido foi publicado no tópico, mas a
 agregação do App B acontece de forma assíncrona. Prometer "Created" seria mentir sobre o que
 já terminou.
+
+`GET /orders/{id}` existe porque o 202 passou a prometer menos ainda depois da Saga: o pedido
+nasce em `PENDING_PAYMENT` e o desfecho chega por evento. Sem uma leitura, o resultado da
+compensação não seria observável de fora — nem por um humano, nem pelo teste de carga. Um id
+malformado responde `404`, e não `500`: perguntar por `abc` é perguntar por um pedido que não
+pode existir, o que é o mesmo caso de um id válido e desconhecido.
 
 O filtro `level` é por severidade **mínima** — pedir `WARN` traz `WARN` e `ERROR`. É o que
 alguém investigando um incidente espera, e evita ter que consultar duas vezes.

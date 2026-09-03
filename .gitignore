@@ -10,6 +10,7 @@ data/*
 # Load tests
 load-tests/node_modules/
 load-tests/dist/
+load-tests/logs/
 
 # IDE
 .idea/

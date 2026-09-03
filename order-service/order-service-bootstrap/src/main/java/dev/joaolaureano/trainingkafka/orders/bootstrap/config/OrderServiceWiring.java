@@ -9,11 +9,15 @@ import dev.joaolaureano.trainingkafka.orders.adapters.persistence.OutboxDispatch
 import dev.joaolaureano.trainingkafka.orders.adapters.persistence.OutboxStore;
 import dev.joaolaureano.trainingkafka.orders.adapters.persistence.OutboxTranslator;
 import dev.joaolaureano.trainingkafka.orders.adapters.persistence.SqliteOrderRepository;
+import dev.joaolaureano.trainingkafka.orders.adapters.web.FindOrderPort;
 import dev.joaolaureano.trainingkafka.orders.adapters.web.PlaceOrderPort;
+import dev.joaolaureano.trainingkafka.orders.application.FindOrderService;
+import dev.joaolaureano.trainingkafka.orders.application.FindOrderUseCase;
 import dev.joaolaureano.trainingkafka.orders.application.PlaceOrderService;
 import dev.joaolaureano.trainingkafka.orders.application.PlaceOrderUseCase;
 import dev.joaolaureano.trainingkafka.orders.application.port.ActivityLogPublisher;
 import dev.joaolaureano.trainingkafka.orders.bootstrap.facade.ActivityLogFacade;
+import dev.joaolaureano.trainingkafka.orders.bootstrap.facade.FindOrderFacade;
 import dev.joaolaureano.trainingkafka.orders.bootstrap.facade.PlaceOrderFacade;
 import dev.joaolaureano.trainingkafka.orders.domain.port.OrderRepository;
 import dev.joaolaureano.trainingkafka.orders.application.ApplyPaymentResult;
@@ -129,6 +133,16 @@ public class OrderServiceWiring {
     @Bean
     public PlaceOrderPort placeOrderPort(PlaceOrderUseCase placeOrderUseCase) {
         return new PlaceOrderFacade(placeOrderUseCase);
+    }
+
+    @Bean
+    public FindOrderUseCase findOrderUseCase(OrderRepository orders) {
+        return new FindOrderService(orders);
+    }
+
+    @Bean
+    public FindOrderPort findOrderPort(FindOrderUseCase findOrderUseCase) {
+        return new FindOrderFacade(findOrderUseCase);
     }
 
     @Bean

@@ -3,6 +3,8 @@ package dev.joaolaureano.trainingkafka.orders.adapters.web;
 import dev.joaolaureano.trainingkafka.orders.domain.model.OrderId;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,9 +22,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class OrderController {
 
     private final PlaceOrderPort placeOrder;
+    private final FindOrderPort findOrder;
 
-    public OrderController(PlaceOrderPort placeOrder) {
+    public OrderController(PlaceOrderPort placeOrder, FindOrderPort findOrder) {
         this.placeOrder = placeOrder;
+        this.findOrder = findOrder;
     }
 
     /**
@@ -37,5 +41,18 @@ public class OrderController {
 
         return ResponseEntity.status(HttpStatus.ACCEPTED)
                 .body(PlaceOrderResponse.accepted(orderId.toString()));
+    }
+
+    /**
+     * O desfecho da Saga, que o 202 não podia prometer.
+     *
+     * PENDING_PAYMENT enquanto o pagamento não respondeu; PAID ou CANCELLED
+     * depois. É a única forma de observar de fora que a compensação aconteceu.
+     */
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderResponse> byId(@PathVariable String orderId) {
+        return findOrder.byId(orderId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }

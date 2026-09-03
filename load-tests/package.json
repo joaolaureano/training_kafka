@@ -6,7 +6,7 @@
   "scripts": {
     "build": "esbuild src/orders-load.js --bundle --outfile=dist/orders-load.js --format=esm --platform=neutral --external:k6 --external:k6/*",
     "test": "npm run build && k6 run dist/orders-load.js",
-    "smoke": "npm run build && k6 run --vus 5 --duration 15s --env SCENARIO=smoke dist/orders-load.js"
+    "smoke": "npm run build && PROFILE=smoke k6 run dist/orders-load.js"
   },
   "devDependencies": {
     "@faker-js/faker": "^9.3.0",

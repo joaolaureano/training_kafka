@@ -2,6 +2,7 @@ package dev.joaolaureano.trainingkafka.payment.bootstrap.config;
 
 import dev.joaolaureano.trainingkafka.payment.adapters.gateway.DeterministicPaymentGateway;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.joaolaureano.trainingkafka.payment.adapters.messaging.KafkaActivityLogPublisher;
 import dev.joaolaureano.trainingkafka.payment.adapters.messaging.KafkaOutboxDispatcher;
 import dev.joaolaureano.trainingkafka.payment.adapters.messaging.OutboxRelay;
 import dev.joaolaureano.trainingkafka.payment.adapters.messaging.PaymentEventOutboxTranslator;
@@ -13,6 +14,8 @@ import dev.joaolaureano.trainingkafka.payment.adapters.messaging.OrderPlacedPort
 import dev.joaolaureano.trainingkafka.payment.adapters.persistence.SqlitePaymentRepository;
 import dev.joaolaureano.trainingkafka.payment.application.CompensateFraudulentOrders;
 import dev.joaolaureano.trainingkafka.payment.application.ProcessOrderPayment;
+import dev.joaolaureano.trainingkafka.payment.application.port.ActivityLogPublisher;
+import dev.joaolaureano.trainingkafka.payment.bootstrap.facade.ActivityLogFacade;
 import dev.joaolaureano.trainingkafka.payment.bootstrap.facade.FraudEventFacade;
 import dev.joaolaureano.trainingkafka.payment.bootstrap.facade.OrderPlacedFacade;
 import dev.joaolaureano.trainingkafka.payment.domain.port.PaymentGateway;
@@ -93,9 +96,21 @@ public class PaymentWiring {
     }
 
     @Bean
+    KafkaActivityLogPublisher kafkaActivityLogPublisher(
+            KafkaTemplate<String, Object> template,
+            @Value("${spring.application.name}") String applicationName) {
+        return new KafkaActivityLogPublisher(template, applicationName);
+    }
+
+    @Bean
+    ActivityLogPublisher activityLogPublisher(KafkaActivityLogPublisher publisher) {
+        return new ActivityLogFacade(publisher);
+    }
+
+    @Bean
     ProcessOrderPayment processOrderPayment(PaymentRepository repository, PaymentGateway gateway,
-                                            Clock clock) {
-        return new ProcessOrderPayment(repository, gateway, clock);
+                                            ActivityLogPublisher activityLog, Clock clock) {
+        return new ProcessOrderPayment(repository, gateway, activityLog, clock);
     }
 
     @Bean
@@ -104,8 +119,10 @@ public class PaymentWiring {
     }
 
     @Bean
-    CompensateFraudulentOrders compensateFraudulentOrders(PaymentRepository repository, Clock clock) {
-        return new CompensateFraudulentOrders(repository, clock);
+    CompensateFraudulentOrders compensateFraudulentOrders(PaymentRepository repository,
+                                                          ActivityLogPublisher activityLog,
+                                                          Clock clock) {
+        return new CompensateFraudulentOrders(repository, activityLog, clock);
     }
 
     @Bean

@@ -23,6 +23,7 @@ flowchart LR
     Metrics -->|métricas de venda| MetricsApi[REST /metrics]
     Fraud -->|FraudDetected<br/>audit-events| Audit[App C<br/>audit-service<br/>:8082]
     Order -->|logs estruturados<br/>audit-events| Audit
+    Payment -->|logs estruturados<br/>audit-events| Audit
     Order -->|OrderPlaced<br/>orders| Payment[App E<br/>payment-service<br/>Saga]
     Payment -->|PaymentApproved / PaymentFailed<br/>PaymentCancelled<br/>payment-events<br/>key: orderId| Order
     Fraud -->|FraudDetected<br/>fraud-events<br/>key: customerId| Payment
@@ -36,7 +37,7 @@ flowchart LR
 | **B** | `metrics-consumer` | 8081 | Consome `orders` e acumula métricas de venda |
 | **C** | `audit-service` | 8082 | Consome `audit-events`, persiste e responde consultas por nível/app/período |
 | **D** | `fraud-service` | — | Processa `orders` com Kafka Streams, alerta em `audit-events` e dispara compensação em `fraud-events` |
-| **E** | `payment-service` | — | Consome `orders`, cobra num gateway simulado, publica o desfecho em `payment-events` e estorna ao receber `fraud-events` |
+| **E** | `payment-service` | — | Consome `orders`, cobra num gateway simulado, publica o desfecho em `payment-events`, estorna ao receber `fraud-events` e registra tudo em `audit-events` |
 
 ## A Saga de pagamento
 
@@ -174,6 +175,42 @@ Compensar metade de uma rajada deixaria pedidos fraudulentos pagos — pior do q
 não compensar. O valor de cada pedido viaja junto porque o payment pode ainda não
 ter visto o `OrderPlaced`: nesse caso ele registra o pagamento **já cancelado**, o
 que fecha a porta para a cobrança que ainda está a caminho.
+
+### A trilha de auditoria do pagamento
+
+O App E registra em `audit-events` o que fez com o dinheiro, com o mesmo contrato
+que o App A já usava — `level`, `timestamp`, `app`, `action`, `context`:
+
+| Ação | Nível | Quando |
+|---|---|---|
+| `payment.approved` | INFO | O gateway aceitou a cobrança |
+| `payment.declined` | WARN | O gateway recusou. **Não é erro**: é desfecho de negócio, e o sistema funcionou |
+| `payment.refunded` | WARN | Compensação sobre pagamento aprovado — dinheiro voltou |
+| `payment.cancelled` | WARN | Compensação sobre pagamento ainda pendente — nada foi cobrado |
+| `payment.compensation.skipped` | INFO | Fraude detectada, mas não havia o que estornar |
+
+Três decisões que valem o comentário:
+
+**`declined` é WARN, não ERROR.** ERROR fica para quando o mecanismo falha — e aí a
+exceção sobe, a mensagem vai para a DLQ e não passa pela trilha. Confundir os dois
+faria um painel de erros acusar incidente toda vez que um cartão fosse recusado.
+
+**`refunded` e `cancelled` são ações distintas**, e o contexto carrega
+`previousStatus` e `refunded`. Chamar de "estorno" um pagamento que nunca foi
+cobrado é mentira contábil, e conciliar depois exige saber qual dos dois foi.
+
+**`compensation.skipped` existe porque o silêncio não explica.** Para quem audita,
+"por que este pedido fraudulento não foi estornado?" é pergunta legítima; sem esse
+registro, a resposta — o pagamento já havia falhado — não está em lugar nenhum.
+
+O `customerId` **não** vai para o log, seguindo o que o App A já fazia. O
+`correlationId` vai, e é ele que costura a linha do pedido, a do pagamento e a do
+alerta de fraude numa investigação.
+
+> Isto **não** passa pelo outbox, e a diferença é deliberada. O registro contábil é a
+> tabela `payments` mais o `payment-events`, e esses são transacionais. `audit-events`
+> é a visão pesquisável desses fatos: perder uma linha num crash é aceitável, e
+> amarrá-la à transação do pagamento faria telemetria atrasar dinheiro.
 
 ### O que o fraud-service continua não fazendo
 

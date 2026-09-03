@@ -1,5 +1,8 @@
 package dev.joaolaureano.trainingkafka.payment.application;
 
+import dev.joaolaureano.trainingkafka.payment.application.port.ActivityLog;
+import dev.joaolaureano.trainingkafka.payment.application.port.ActivityLogPublisher;
+import dev.joaolaureano.trainingkafka.payment.application.port.AuditLevel;
 import dev.joaolaureano.trainingkafka.payment.domain.event.DomainEvent;
 import dev.joaolaureano.trainingkafka.payment.domain.event.PaymentApproved;
 import dev.joaolaureano.trainingkafka.payment.domain.event.PaymentFailed;
@@ -29,6 +32,7 @@ class ProcessOrderPaymentTest {
     private static final Clock CLOCK = Clock.fixed(NOW, ZoneOffset.UTC);
 
     private final FakeRepository repository = new FakeRepository();
+    private final RecordingLogPublisher logs = new RecordingLogPublisher();
 
     @Test
     @DisplayName("aprovação do gateway vira PaymentApproved")
@@ -69,6 +73,46 @@ class ProcessOrderPaymentTest {
     }
 
     @Test
+    @DisplayName("aprovação vira log INFO auditável, sem vazar o cliente")
+    void approvalIsAudited() {
+        service(approving()).handle("order-1", "cust-1", BigDecimal.TEN, "corr-1");
+
+        ActivityLog log = logs.only();
+        assertThat(log.level()).isEqualTo(AuditLevel.INFO);
+        assertThat(log.action()).isEqualTo("payment.approved");
+        assertThat(log.occurredAt()).isEqualTo(NOW);
+        assertThat(log.context())
+                .containsEntry("orderId", "order-1")
+                .containsEntry("amount", "10")
+                .containsEntry("correlationId", "corr-1")
+                .containsKey("paymentId")
+                // Mesma regra do App A: identificador de cliente não vai para o log.
+                .doesNotContainKey("customerId");
+    }
+
+    @Test
+    @DisplayName("recusa é WARN e carrega o motivo — não é erro, é desfecho")
+    void declineIsAuditedAsWarning() {
+        service(declining("limite excedido")).handle("order-1", "cust-1", BigDecimal.TEN, "corr-1");
+
+        ActivityLog log = logs.only();
+        assertThat(log.level()).isEqualTo(AuditLevel.WARN);
+        assertThat(log.action()).isEqualTo("payment.declined");
+        assertThat(log.context()).containsEntry("reason", "limite excedido");
+    }
+
+    @Test
+    @DisplayName("reentrega não gera segunda linha de auditoria")
+    void redeliveryIsNotAuditedTwice() {
+        ProcessOrderPayment service = service(approving());
+
+        service.handle("order-1", "cust-1", BigDecimal.TEN, "corr-1");
+        service.handle("order-1", "cust-1", BigDecimal.TEN, "corr-1");
+
+        assertThat(logs.published).hasSize(1);
+    }
+
+    @Test
     @DisplayName("reentrega sobre pagamento já resolvido não cobra nem duplica evento")
     void redeliveryNeitherChargesNorRepublishes() {
         // Antes do outbox era preciso reemitir aqui, porque o crash entre gravar e
@@ -87,7 +131,7 @@ class ProcessOrderPaymentTest {
     }
 
     private ProcessOrderPayment service(PaymentGateway gateway) {
-        return new ProcessOrderPayment(repository, gateway, CLOCK);
+        return new ProcessOrderPayment(repository, gateway, logs, CLOCK);
     }
 
     private static RecordingGateway approving() {
@@ -96,6 +140,21 @@ class ProcessOrderPaymentTest {
 
     private static RecordingGateway declining(String reason) {
         return new RecordingGateway(PaymentGateway.GatewayResult.declined(reason));
+    }
+
+
+    private static final class RecordingLogPublisher implements ActivityLogPublisher {
+        private final List<ActivityLog> published = new ArrayList<>();
+
+        ActivityLog only() {
+            assertThat(published).hasSize(1);
+            return published.getFirst();
+        }
+
+        @Override
+        public void publish(ActivityLog log) {
+            published.add(log);
+        }
     }
 
     /**

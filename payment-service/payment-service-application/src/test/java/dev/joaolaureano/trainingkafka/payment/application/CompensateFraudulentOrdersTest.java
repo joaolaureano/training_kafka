@@ -1,5 +1,8 @@
 package dev.joaolaureano.trainingkafka.payment.application;
 
+import dev.joaolaureano.trainingkafka.payment.application.port.ActivityLog;
+import dev.joaolaureano.trainingkafka.payment.application.port.ActivityLogPublisher;
+import dev.joaolaureano.trainingkafka.payment.application.port.AuditLevel;
 import dev.joaolaureano.trainingkafka.payment.domain.event.DomainEvent;
 import dev.joaolaureano.trainingkafka.payment.domain.event.PaymentCancelled;
 import dev.joaolaureano.trainingkafka.payment.domain.model.Payment;
@@ -28,8 +31,9 @@ class CompensateFraudulentOrdersTest {
     private static final Clock CLOCK = Clock.fixed(NOW, ZoneOffset.UTC);
 
     private final FakeRepository payments = new FakeRepository();
+    private final RecordingLogPublisher logs = new RecordingLogPublisher();
     private final CompensateFraudulentOrders compensate =
-            new CompensateFraudulentOrders(payments, CLOCK);
+            new CompensateFraudulentOrders(payments, logs, CLOCK);
 
     @Test
     @DisplayName("estorna a janela inteira, um evento por pedido")
@@ -66,7 +70,7 @@ class CompensateFraudulentOrdersTest {
         payments.events.clear();
 
         RecordingGateway gateway = new RecordingGateway();
-        new ProcessOrderPayment(payments, gateway, CLOCK)
+        new ProcessOrderPayment(payments, gateway, logs, CLOCK)
                 .handle("order-1", "cust-1", BigDecimal.TEN, "corr-1");
 
         assertThat(gateway.charges).isZero();
@@ -84,6 +88,53 @@ class CompensateFraudulentOrdersTest {
         compensate.handle("cust-1", window("order-1"), "fraud", "corr-f");
 
         assertThat(payments.events).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("estorno é auditado como estorno, com o estado anterior")
+    void refundIsAudited() {
+        approvedPayment("order-1");
+
+        compensate.handle("cust-1", window("order-1"), "fraude: 5 pedidos em 10s", "corr-f");
+
+        ActivityLog log = logs.only();
+        assertThat(log.level()).isEqualTo(AuditLevel.WARN);
+        assertThat(log.action()).isEqualTo("payment.refunded");
+        assertThat(log.context())
+                .containsEntry("orderId", "order-1")
+                .containsEntry("previousStatus", "APPROVED")
+                .containsEntry("refunded", "true")
+                .containsEntry("reason", "fraude: 5 pedidos em 10s")
+                .containsEntry("correlationId", "corr-f")
+                .doesNotContainKey("customerId");
+    }
+
+    @Test
+    @DisplayName("cancelar antes de cobrar não é estorno, e o log não mente sobre isso")
+    void cancellationBeforeChargeIsNotCalledARefund() {
+        compensate.handle("cust-1", window("order-1"), "fraude", "corr-f");
+
+        ActivityLog log = logs.only();
+        assertThat(log.action()).isEqualTo("payment.cancelled");
+        assertThat(log.context())
+                .containsEntry("previousStatus", "PENDING")
+                .containsEntry("refunded", "false");
+    }
+
+    @Test
+    @DisplayName("compensação sem efeito também é registrada: o silêncio não explica")
+    void skippedCompensationIsStillAudited() {
+        Payment failed = Payment.request("order-1", "cust-1", BigDecimal.TEN);
+        failed.fail(NOW, "declined", "corr-1");
+        failed.pullDomainEvents();
+        payments.save(failed);
+
+        compensate.handle("cust-1", window("order-1"), "fraude", "corr-f");
+
+        ActivityLog log = logs.only();
+        assertThat(log.level()).isEqualTo(AuditLevel.INFO);
+        assertThat(log.action()).isEqualTo("payment.compensation.skipped");
+        assertThat(log.context()).containsEntry("previousStatus", "FAILED");
     }
 
     @Test
@@ -111,6 +162,21 @@ class CompensateFraudulentOrdersTest {
         return java.util.Arrays.stream(orderIds)
                 .map(id -> new CompensateFraudulentOrders.FraudulentOrder(id, BigDecimal.TEN))
                 .toList();
+    }
+
+
+    private static final class RecordingLogPublisher implements ActivityLogPublisher {
+        private final List<ActivityLog> published = new ArrayList<>();
+
+        ActivityLog only() {
+            assertThat(published).hasSize(1);
+            return published.getFirst();
+        }
+
+        @Override
+        public void publish(ActivityLog log) {
+            published.add(log);
+        }
     }
 
     /**

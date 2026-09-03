@@ -450,9 +450,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1788458150.6841362,
-    "seen": 1788458229.5629592,
-    "ast_hash": "43a04c310d3dbedfd6665414943099e2",
+    "mtime": 1788458744.1138017,
+    "seen": 1788458748.2442088,
+    "ast_hash": "778545d9b8e7c4ae50c12c379edf287b",
     "semantic_hash": ""
   },
   "docker-compose.yml": {
@@ -1140,9 +1140,9 @@
     "semantic_hash": ""
   },
   "payment-service/payment-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/payment/adapters/messaging/Topics.java": {
-    "mtime": 1788455809.251763,
-    "seen": 1788456173.972106,
-    "ast_hash": "f62550d625f9ab978d3f6b61186cfbbf",
+    "mtime": 1788458505.9276702,
+    "seen": 1788458748.244149,
+    "ast_hash": "21b77fa82a67ba25706dff62763edaee",
     "semantic_hash": ""
   },
   "payment-service/payment-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/payment/adapters/persistence/SqlitePaymentRepository.java": {
@@ -1170,15 +1170,15 @@
     "semantic_hash": ""
   },
   "payment-service/payment-service-application/src/main/java/dev/joaolaureano/trainingkafka/payment/application/ProcessOrderPayment.java": {
-    "mtime": 1788456456.3903284,
-    "seen": 1788456751.212723,
-    "ast_hash": "3fae040c61be9d1e285476dfcc8be6c1",
+    "mtime": 1788458539.9648683,
+    "seen": 1788458748.244168,
+    "ast_hash": "ba2f9f763f9c6a8801140d321a1502be",
     "semantic_hash": ""
   },
   "payment-service/payment-service-application/src/test/java/dev/joaolaureano/trainingkafka/payment/application/ProcessOrderPaymentTest.java": {
-    "mtime": 1788456588.149404,
-    "seen": 1788456751.212726,
-    "ast_hash": "85453089fb98c022959dab53bebce10b",
+    "mtime": 1788458597.5661833,
+    "seen": 1788458748.244176,
+    "ast_hash": "e68c980ffeabbbfedf016b9eaee63845",
     "semantic_hash": ""
   },
   "payment-service/payment-service-bootstrap/pom.xml": {
@@ -1194,9 +1194,9 @@
     "semantic_hash": ""
   },
   "payment-service/payment-service-bootstrap/src/main/java/dev/joaolaureano/trainingkafka/payment/bootstrap/config/PaymentWiring.java": {
-    "mtime": 1788456545.6661181,
-    "seen": 1788456751.212731,
-    "ast_hash": "29ec45ad37c839397551eeb38019eb50",
+    "mtime": 1788458553.9803236,
+    "seen": 1788458748.24418,
+    "ast_hash": "a527eb3a0460909b2a618c6059540ebc",
     "semantic_hash": ""
   },
   "payment-service/payment-service-bootstrap/src/main/java/dev/joaolaureano/trainingkafka/payment/bootstrap/facade/OrderPlacedFacade.java": {
@@ -1314,15 +1314,15 @@
     "semantic_hash": ""
   },
   "payment-service/payment-service-application/src/main/java/dev/joaolaureano/trainingkafka/payment/application/CompensateFraudulentOrders.java": {
-    "mtime": 1788456456.4409115,
-    "seen": 1788456751.2127218,
-    "ast_hash": "b9779e6978325e42fe0756b056304d59",
+    "mtime": 1788458539.9693131,
+    "seen": 1788458748.2441669,
+    "ast_hash": "547e5a9cb45a01c887cc549543b2ddca",
     "semantic_hash": ""
   },
   "payment-service/payment-service-application/src/test/java/dev/joaolaureano/trainingkafka/payment/application/CompensateFraudulentOrdersTest.java": {
-    "mtime": 1788456588.1497138,
-    "seen": 1788456751.212725,
-    "ast_hash": "7ab5e49c9cdc77cbe142b23b5f0822cd",
+    "mtime": 1788458597.5667028,
+    "seen": 1788458748.244174,
+    "ast_hash": "e88bf0936869622c544947300b125def",
     "semantic_hash": ""
   },
   "payment-service/payment-service-bootstrap/src/main/java/dev/joaolaureano/trainingkafka/payment/bootstrap/facade/FraudEventFacade.java": {
@@ -1437,6 +1437,48 @@
     "mtime": 1788458083.5141692,
     "seen": 1788458229.562678,
     "ast_hash": "e9cdd54a1b898aa5d5dac89a626bc68e",
+    "semantic_hash": ""
+  },
+  "payment-service/payment-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/payment/adapters/messaging/AuditEventMessage.java": {
+    "mtime": 1788458505.8656373,
+    "seen": 1788458748.244127,
+    "ast_hash": "3a0b8b50530b4a151f977ec94bcc8e79",
+    "semantic_hash": ""
+  },
+  "payment-service/payment-service-adapters/src/main/java/dev/joaolaureano/trainingkafka/payment/adapters/messaging/KafkaActivityLogPublisher.java": {
+    "mtime": 1788458505.86996,
+    "seen": 1788458748.244134,
+    "ast_hash": "3dbefd314dd5b671e3ae927edd7c0568",
+    "semantic_hash": ""
+  },
+  "payment-service/payment-service-adapters/src/test/java/dev/joaolaureano/trainingkafka/payment/adapters/messaging/AuditEventMessageContractTest.java": {
+    "mtime": 1788458640.6050067,
+    "seen": 1788458748.24416,
+    "ast_hash": "e9253f7bb46d42bb401a16743d4cb402",
+    "semantic_hash": ""
+  },
+  "payment-service/payment-service-application/src/main/java/dev/joaolaureano/trainingkafka/payment/application/port/ActivityLog.java": {
+    "mtime": 1788458486.4951096,
+    "seen": 1788458748.24417,
+    "ast_hash": "a506660dc18eef1324ca581d385c77f0",
+    "semantic_hash": ""
+  },
+  "payment-service/payment-service-application/src/main/java/dev/joaolaureano/trainingkafka/payment/application/port/ActivityLogPublisher.java": {
+    "mtime": 1788458486.4989562,
+    "seen": 1788458748.244171,
+    "ast_hash": "0fc0700fe58016ce52bceeac59bd19ac",
+    "semantic_hash": ""
+  },
+  "payment-service/payment-service-application/src/main/java/dev/joaolaureano/trainingkafka/payment/application/port/AuditLevel.java": {
+    "mtime": 1788458486.4912045,
+    "seen": 1788458748.244173,
+    "ast_hash": "af8608016cbe605792b92ba0a3a2caea",
+    "semantic_hash": ""
+  },
+  "payment-service/payment-service-bootstrap/src/main/java/dev/joaolaureano/trainingkafka/payment/bootstrap/facade/ActivityLogFacade.java": {
+    "mtime": 1788458505.9336562,
+    "seen": 1788458748.244182,
+    "ast_hash": "7264c8c656efc65fdebc8e514e011eb0",
     "semantic_hash": ""
   }
 }

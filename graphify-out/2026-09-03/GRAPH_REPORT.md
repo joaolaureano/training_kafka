@@ -1,40 +1,40 @@
 # Graph Report - training_kafka  (2026-09-03)
 
 ## Corpus Check
-- 240 files · ~45,622 words
+- 240 files · ~48,081 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1496 nodes · 4003 edges · 100 communities (61 shown, 39 thin omitted)
+- 1505 nodes · 4011 edges · 98 communities (55 shown, 43 thin omitted)
 - Extraction: 88% EXTRACTED · 12% INFERRED · 0% AMBIGUOUS · INFERRED: 463 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `1b344b12`
+- Built from commit: `1de2dc3c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - AuditController.java
 - ProductSalesRecord
-- .request
+- SqlitePaymentRepository
 - ProductId
 - DeadLetterProperties
-- FraudDetectedMessage
+- org.junit.jupiter.api.DisplayName
 - metrics-consumer (App B)
-- OrderLedgerRepository
-- java.sql.Connection
-- Violation
+- MetricsQueryService
+- org.springframework.context.annotation.Bean
+- .place
 - Order
 - Money
 - FraudTopology.java
-- OrderServiceWiring
+- SqliteOrderRepositoryTest.java
 - orders-load.js
 - package.json
 - org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 - org.springframework.boot.autoconfigure.SpringBootApplication
+- AuditServiceWiring.java
 - AuditEvent
-- StdoutAuditRepository
 - SqliteRepositoryException
 - dev.joaolaureano.trainingkafka:training-kafka
 - Payment
@@ -54,20 +54,20 @@
 - OrderPlaced
 - audit-service
 - audit-service-adapters
-- OutboxRelayScheduler
+- org.springframework.stereotype.Component
 - analytics/adapters/messaging/AuditEventMessage.java
 - audit-service-application
-- org.springframework.context.annotation.Bean
+- Topics
 - Topics
 - audit-service-bootstrap
 - audit-service-domain
-- ApplyPaymentResult
-- PaymentRepository
-- OutboxStore
+- ApplyPaymentResultTest
+- .charge
+- OutboxRecord
 - run.sh
-- PaymentWiring.java
+- .validOrder
 - ProductSalesRepository
-- FraudStreamsConfiguration.java
+- .request
 - Anticorruption Layer de tradução na fronteira
 - fraud-service
 - metrics-consumer-bootstrap
@@ -75,46 +75,44 @@
 - fraud-service-adapters
 - fraud-service-application
 - fraud-service-bootstrap
-- org.springframework.stereotype.Component
+- PaymentWiring.java
 - fraud-service-domain
-- .handle
+- OrderServiceWiring
 - DeadLetterProperties
 - OutboxRecord
-- org.junit.jupiter.api.Test
-- DuckDbAuditRepository
+- ProcessOrderPaymentTest
+- ApplicationName
 - DeadLetterProperties
 - DeadLetterProperties
 - JsonlFileAuditRepository
 - KafkaActivityLogPublisher
-- OrderRepository
-- com.fasterxml.jackson.databind.ObjectMapper
-- org.junit.jupiter.api.BeforeEach
-- ApplicationName
+- PlaceOrderServiceTest.java
+- .handle
+- OrderStatus
+- PaymentEventPort
+- InvalidAuditException
+- org.junit.jupiter.api.Test
 - TestRepositories
-- org.junit.jupiter.api.DisplayName
-- ActivityLogPublisher
 - Money
-- OrderId
+- OutboxRelayTest
 - Retry
 - UnknownOrderException
-- InvalidAuditException
+- FindOrderServiceTest.java
 - payment-service
 - payment-service-adapters
 - payment-service-application
 - payment-service-bootstrap
 - payment-service-domain
-- OrderEventOutboxTranslator
-- OutboxRecord
-- FraudEventConsumerConfig.java
-- OrderRecord
+- FraudStreamsConfiguration.java
+- AuditEventMessageContractTest.java
+- Topics
+- PersistenceConfiguration.java
 - ActivityLog
-- Retry
+- FraudEventConsumerConfig.java
 - PaymentEventOutboxTranslator
-- KafkaActivityLogPublisher
-- PlaceOrderUseCase
-- AuditLevel
-- FakeProductSales
-- GatewayResult
+- com.fasterxml.jackson.databind.ObjectMapper
+- OrderRepository
+- Topics
 
 ## God Nodes (most connected - your core abstractions)
 1. `Order` - 55 edges
@@ -147,271 +145,247 @@
 - **Pipeline de eventos A → orders → B → application-logs → C** — readme_order_service, readme_orders_topic, readme_metrics_consumer, readme_application_logs_topic, readme_log_aggregator, docker_compose_kafka_broker [EXTRACTED 1.00]
 - **Modelo de domínio do App B (3 raízes + VO derivado + handler)** — readme_productsalesrecord, readme_customerorderpattern, readme_orderrecord, readme_revenuewindow, readme_orderplacedhandler [EXTRACTED 1.00]
 
-## Communities (100 total, 39 thin omitted)
+## Communities (98 total, 43 thin omitted)
 
 ### Community 0 - "AuditController.java"
-Cohesion: 0.33
-Nodes (6): AuditController, AuditEventView, OrderController, org.springframework.web.bind.annotation.GetMapping, org.springframework.web.bind.annotation.RequestMapping, org.springframework.web.bind.annotation.RestController
+Cohesion: 0.08
+Nodes (16): AuditController, MetricsController, ProductSalesView, RevenueView, OrderController, OrderResponse, PlaceOrderPort, PlaceOrderRequest (+8 more)
 
 ### Community 1 - "ProductSalesRecord"
 Cohesion: 0.10
 Nodes (13): Override, ProductId, InMemoryProductSalesRepository, Override, Money, Override, ProductId, Override (+5 more)
 
-### Community 2 - ".request"
-Cohesion: 0.18
-Nodes (5): OutboxRecord, Override, SqlitePaymentRepository, SqlitePaymentRepositoryTest, PaymentTest
+### Community 2 - "SqlitePaymentRepository"
+Cohesion: 0.26
+Nodes (4): OutboxRecord, Override, SqlitePaymentRepository, SqlitePaymentRepositoryTest
 
 ### Community 3 - "ProductId"
-Cohesion: 0.09
-Nodes (13): MetricsController, ProductSalesView, RevenueView, MetricsQueryPort, MetricsQueryService, Override, MetricsQueryFacade, Override (+5 more)
+Cohesion: 0.12
+Nodes (12): DuckDbOrderLedgerRepository, Override, InMemoryOrderLedgerRepository, Override, OrderLedgerRepositoryContractTest, OrderRecord, Override, ProductId (+4 more)
 
 ### Community 4 - "DeadLetterProperties"
 Cohesion: 0.12
 Nodes (3): DeadLetterProperties, FraudProperties, org.springframework.boot.context.properties.ConfigurationProperties
 
-### Community 5 - "FraudDetectedMessage"
-Cohesion: 0.21
-Nodes (6): FraudDetectedMessage, FraudulentOrder, FraudEventListener, FraudEventPort, FraudEventFacade, Override
+### Community 5 - "org.junit.jupiter.api.DisplayName"
+Cohesion: 0.11
+Nodes (7): StdoutAuditRepositoryTest, TimeRange, MoneyRules, OrderTest, WhenInvalid, org.junit.jupiter.api.DisplayName, org.junit.jupiter.api.Nested
 
 ### Community 6 - "metrics-consumer (App B)"
 Cohesion: 0.08
 Nodes (38): KAFKA_AUTO_CREATE_TOPICS_ENABLE=false, Listeners PLAINTEXT (9092) e PLAINTEXT_HOST (9094), Broker Kafka (apache/kafka:4.1.2), Kafka UI (kafbat/kafka-ui:8090), KRaft: nó único broker+controller, Fatores de replicação 1 para nó único, Tópico Kafka "application-logs", Gargalo: commit por mensagem no consumidor (+30 more)
 
-### Community 8 - "java.sql.Connection"
-Cohesion: 0.15
-Nodes (11): AuditPersistenceConfiguration, DuckDbPersistence, JsonlPersistence, StdoutPersistence, java.sql.Connection, DuckDbPersistence, InMemoryPersistence, PersistenceConfiguration (+3 more)
+### Community 7 - "MetricsQueryService"
+Cohesion: 0.21
+Nodes (5): MetricsQueryPort, MetricsQueryService, AnalyticsWiring, Override, MetricsQueryFacade
 
-### Community 9 - "Violation"
-Cohesion: 0.08
-Nodes (18): AuditExceptionHandler, java.time.format.DateTimeParseException, OrderPlacedMessage, OrderPlaced, Quantity, OrderPlacedTranslator, AnalyticsExceptionHandler, InvalidValueException (+10 more)
+### Community 8 - "org.springframework.context.annotation.Bean"
+Cohesion: 0.11
+Nodes (14): AuditPersistenceConfiguration, DuckDbPersistence, JsonlPersistence, StdoutPersistence, java.sql.Connection, DuckDbPersistence, InMemoryPersistence, PersistenceConfiguration (+6 more)
+
+### Community 9 - ".place"
+Cohesion: 0.07
+Nodes (22): AuditExceptionHandler, java.time.format.DateTimeParseException, OrderPlacedMessage, OrderPlaced, Quantity, OrderPlacedTranslator, AnalyticsExceptionHandler, InvalidValueException (+14 more)
 
 ### Community 10 - "Order"
-Cohesion: 0.16
-Nodes (5): Override, Order, OrderTest, WhenValid, org.junit.jupiter.api.Nested
+Cohesion: 0.11
+Nodes (11): FakeRepository, Override, FakeRepository, Override, Override, RecordingRepository, DomainEvent, Override (+3 more)
 
 ### Community 11 - "Money"
-Cohesion: 0.12
-Nodes (9): OrderPlaced, CustomerId, Override, Override, Money, Override, ProductId, Override (+1 more)
+Cohesion: 0.11
+Nodes (10): OrderPlacedMessage, OrderPlaced, CustomerId, Override, Override, Money, Override, ProductId (+2 more)
 
 ### Community 12 - "FraudTopology.java"
 Cohesion: 0.05
-Nodes (36): AuditEventMessage, FraudDetectedMessage, FraudulentOrder, OrderPlacedMessage, Topics, CustomerFraudState, Override, OccurredAtTimestampExtractor (+28 more)
+Nodes (37): AuditEventMessage, FraudDetectedMessage, FraudulentOrder, OrderPlacedMessage, Topics, CustomerFraudState, Override, OccurredAtTimestampExtractor (+29 more)
+
+### Community 13 - "SqliteOrderRepositoryTest.java"
+Cohesion: 0.32
+Nodes (3): OutboxRecord, Override, OrderEventOutboxTranslator
 
 ### Community 14 - "orders-load.js"
-Cohesion: 0.09
-Nodes (28): acceptanceRate, APPROVAL_LIMIT, awaitStatus(), CATALOG, COMPENSATION_TIMEOUT_MS, compensationsObserved, FRAUD_MAX_ORDERS, options (+20 more)
+Cohesion: 0.07
+Nodes (36): acceptanceRate, APPROVAL_LIMIT, awaitStatus(), CATALOG, COMPENSATION_METRICS, COMPENSATION_TIMEOUT_MS, compensationDuration, compensationSettled (+28 more)
 
 ### Community 15 - "package.json"
 Cohesion: 0.14
 Nodes (13): esbuild, @faker-js/faker, description, devDependencies, esbuild, @faker-js/faker, name, private (+5 more)
 
 ### Community 16 - "org.springframework.boot.autoconfigure.condition.ConditionalOnProperty"
-Cohesion: 0.18
-Nodes (12): KafkaErrorHandlingConfig, KafkaErrorHandlingConfig, Topics, org.slf4j.Logger, org.springframework.boot.autoconfigure.condition.ConditionalOnProperty, org.springframework.boot.autoconfigure.kafka.KafkaProperties, org.springframework.boot.context.properties.EnableConfigurationProperties, org.springframework.kafka.core.KafkaOperations (+4 more)
+Cohesion: 0.26
+Nodes (10): KafkaErrorHandlingConfig, KafkaErrorHandlingConfig, org.slf4j.Logger, org.springframework.boot.autoconfigure.condition.ConditionalOnProperty, org.springframework.boot.autoconfigure.kafka.KafkaProperties, org.springframework.boot.context.properties.EnableConfigurationProperties, org.springframework.kafka.core.KafkaOperations, org.springframework.kafka.listener.CommonErrorHandler (+2 more)
 
 ### Community 17 - "org.springframework.boot.autoconfigure.SpringBootApplication"
 Cohesion: 0.18
 Nodes (7): AuditServiceBootstrap, FraudServiceBootstrap, MetricsConsumerBootstrap, OrderServiceBootstrap, org.springframework.boot.autoconfigure.SpringBootApplication, org.springframework.scheduling.annotation.EnableScheduling, PaymentServiceBootstrap
 
-### Community 18 - "AuditEvent"
-Cohesion: 0.11
-Nodes (11): AuditEventListener, IngestAuditPort, AuditQueryPort, AuditQueryService, IngestAuditService, AuditServiceWiring, AuditQueryFacade, Override (+3 more)
+### Community 18 - "AuditServiceWiring.java"
+Cohesion: 0.14
+Nodes (8): AuditEventListener, IngestAuditPort, AuditQueryPort, AuditQueryService, IngestAuditService, AuditServiceWiring, AuditQueryFacade, IngestAuditFacade
 
-### Community 19 - "StdoutAuditRepository"
-Cohesion: 0.17
-Nodes (4): Override, StdoutAuditRepository, StdoutAuditRepositoryTest, org.junit.jupiter.api.AfterEach
+### Community 19 - "AuditEvent"
+Cohesion: 0.20
+Nodes (5): Override, StdoutAuditRepository, Override, Override, AuditEvent
 
 ### Community 22 - "Payment"
-Cohesion: 0.11
-Nodes (8): FunctionalInterface, LogFactory, FakeRepository, FakeRepository, Override, Payment, Override, PaymentId
+Cohesion: 0.10
+Nodes (13): FunctionalInterface, LogFactory, FakeRepository, Override, FakeRepository, Override, Payment, PaymentId (+5 more)
 
 ### Community 23 - "DomainEvent"
-Cohesion: 0.10
-Nodes (14): OutboxTranslator, AuditLevel, ERROR, INFO, WARN, DomainEvent, PaymentApproved, PaymentCancelled (+6 more)
+Cohesion: 0.16
+Nodes (5): DomainEvent, PaymentApproved, PaymentCancelled, PaymentFailed, Override
 
 ### Community 24 - "OrderServiceWiring.java"
-Cohesion: 0.22
-Nodes (5): FindOrderPort, OrderResponse, FindOrderUseCase, FindOrderFacade, Override
+Cohesion: 0.23
+Nodes (5): FindOrderPort, FindOrderUseCase, OrderView, FindOrderFacade, Override
 
 ### Community 25 - "AuditRepository"
-Cohesion: 0.42
-Nodes (5): AuditRepositoryContractTest, AuditLevel, AuditRepository, org.junit.jupiter.params.ParameterizedTest, org.junit.jupiter.params.provider.MethodSource
+Cohesion: 0.33
+Nodes (6): AuditRepositoryContractTest, AuditLevel, Connection, AuditRepository, org.junit.jupiter.params.ParameterizedTest, org.junit.jupiter.params.provider.MethodSource
 
 ### Community 34 - "SqliteOrderRepository"
-Cohesion: 0.27
-Nodes (4): OutboxRecord, Override, SqliteOrderRepository, SqliteOrderRepositoryTest
+Cohesion: 0.17
+Nodes (6): ObjectMapper, OutboxRecord, Override, SqliteOrderRepository, SqliteOrderRepositoryTest, org.junit.jupiter.api.BeforeEach
+
+### Community 35 - "AuditFilter"
+Cohesion: 0.16
+Nodes (3): AuditEventView, AuditFilter, TimeRange
 
 ### Community 36 - "OrderPlaced"
 Cohesion: 0.08
-Nodes (14): OrderListener, OrderPlacedPort, OrderPlacedHandler, OrderPlaced, ProductId, OrderPlacedHandlerTest, AnalyticsWiring, Override (+6 more)
+Nodes (16): OrderListener, OrderPlacedPort, OrderPlacedHandler, FakeLedger, FakeProductSales, OrderPlaced, Override, ProductId (+8 more)
 
-### Community 39 - "OutboxRelayScheduler"
-Cohesion: 0.28
-Nodes (3): OutboxRelayScheduler, org.springframework.scheduling.annotation.Scheduled, OutboxRelayScheduler
+### Community 39 - "org.springframework.stereotype.Component"
+Cohesion: 0.11
+Nodes (11): OutboxRelayScheduler, org.springframework.kafka.annotation.KafkaListener, org.springframework.scheduling.annotation.Scheduled, org.springframework.stereotype.Component, FraudDetectedMessage, FraudulentOrder, FraudEventListener, FraudEventPort (+3 more)
 
-### Community 42 - "org.springframework.context.annotation.Bean"
-Cohesion: 0.23
-Nodes (4): KafkaTopicsConfig, Topics, org.apache.kafka.clients.admin.NewTopic, org.springframework.context.annotation.Bean
-
-### Community 46 - "ApplyPaymentResult"
+### Community 48 - "OutboxRecord"
 Cohesion: 0.12
-Nodes (8): PaymentEventListener, PaymentEventMessage, PaymentEventPort, UnknownPaymentEventException, ApplyPaymentResult, ApplyPaymentResultTest, Override, PaymentEventFacade
-
-### Community 47 - "PaymentRepository"
-Cohesion: 0.13
-Nodes (7): DeterministicPaymentGateway, DeterministicPaymentGatewayTest, ProcessOrderPayment, Override, OrderPlacedFacade, PaymentGateway, PaymentRepository
-
-### Community 48 - "OutboxStore"
-Cohesion: 0.17
-Nodes (5): OutboxRelay, FunctionalInterface, OutboxDispatcher, OutboxStore, OutboxRelay
+Nodes (9): Override, OutboxRelay, FunctionalInterface, OutboxDispatcher, OutboxRecord, OutboxStore, FakeStore, Override (+1 more)
 
 ### Community 49 - "run.sh"
-Cohesion: 0.22
-Nodes (14): await_http(), await_log(), cleanup(), die(), log(), LOG_DIR, REPO_ROOT, require() (+6 more)
-
-### Community 50 - "PaymentWiring.java"
-Cohesion: 0.26
-Nodes (5): OutboxRelay, FunctionalInterface, OutboxDispatcher, OutboxStore, OutboxRelay
+Cohesion: 0.21
+Nodes (15): await_http(), await_log(), cleanup(), die(), log(), LOG_DIR, REPO_ROOT, require() (+7 more)
 
 ### Community 51 - "ProductSalesRepository"
 Cohesion: 0.28
 Nodes (5): ProductId, ProductSalesRepositoryContractTest, Override, Quantity, ProductSalesRepository
 
-### Community 52 - "FraudStreamsConfiguration.java"
-Cohesion: 0.47
-Nodes (4): FraudStreamsConfiguration, KafkaStreamsConfiguration, org.springframework.kafka.annotation.EnableKafkaStreams, org.springframework.kafka.config.KafkaStreamsConfiguration
+### Community 52 - ".request"
+Cohesion: 0.20
+Nodes (4): FraudulentOrder, CompensateFraudulentOrdersTest, FraudulentOrder, PaymentTest
 
 ### Community 53 - "Anticorruption Layer de tradução na fronteira"
 Cohesion: 0.50
 Nodes (5): Anticorruption Layer de tradução na fronteira, Contratos de evento duplicados por serviço, LogEntryTranslator, spring.json.add.type.headers=false, OrderPlacedTranslator
 
-### Community 60 - "org.springframework.stereotype.Component"
-Cohesion: 0.19
-Nodes (5): org.springframework.kafka.annotation.KafkaListener, org.springframework.stereotype.Component, OrderPlacedListener, OrderPlacedMessage, OrderPlacedPort
+### Community 60 - "PaymentWiring.java"
+Cohesion: 0.10
+Nodes (13): DeterministicPaymentGateway, OrderPlacedListener, OrderPlacedMessage, OrderPlacedPort, OutboxTranslator, CompensateFraudulentOrders, ActivityLogPublisher, ProcessOrderPayment (+5 more)
 
-### Community 62 - ".handle"
-Cohesion: 0.30
-Nodes (4): FraudulentOrder, CompensateFraudulentOrdersTest, FraudulentOrder, RecordingGateway
+### Community 62 - "OrderServiceWiring"
+Cohesion: 0.20
+Nodes (3): OutboxTranslator, KafkaActivityLogPublisher, OrderServiceWiring
 
 ### Community 64 - "OutboxRecord"
-Cohesion: 0.16
-Nodes (6): Override, OutboxRecord, FakeStore, OutboxRecord, Override, OutboxRelayTest
+Cohesion: 0.11
+Nodes (10): OutboxRelay, FunctionalInterface, OutboxDispatcher, OutboxRecord, OutboxStore, FakeStore, OutboxRecord, Override (+2 more)
 
-### Community 65 - "org.junit.jupiter.api.Test"
-Cohesion: 0.17
-Nodes (6): KafkaErrorHandlingConfigTest, KafkaErrorHandlingConfigTest, org.junit.jupiter.api.Test, org.springframework.boot.test.context.runner.ApplicationContextRunner, ProcessOrderPaymentTest, RecordingGateway
+### Community 65 - "ProcessOrderPaymentTest"
+Cohesion: 0.22
+Nodes (5): Override, RecordingGateway, ProcessOrderPaymentTest, RecordingGateway, GatewayResult
+
+### Community 66 - "ApplicationName"
+Cohesion: 0.13
+Nodes (11): DuckDbAuditRepository, Override, ApplicationName, Override, AuditLevel, DEBUG, ERROR, INFO (+3 more)
 
 ### Community 67 - "DeadLetterProperties"
 Cohesion: 0.10
 Nodes (4): DeadLetterProperties, Retry, DefaultErrorHandler, KafkaErrorHandlingConfig
 
 ### Community 68 - "DeadLetterProperties"
-Cohesion: 0.16
-Nodes (3): DeadLetterProperties, DefaultErrorHandler, KafkaErrorHandlingConfig
+Cohesion: 0.10
+Nodes (4): DeadLetterProperties, Retry, DefaultErrorHandler, KafkaErrorHandlingConfig
 
 ### Community 69 - "JsonlFileAuditRepository"
-Cohesion: 0.33
-Nodes (4): ObjectMapper, Override, JsonlFileAuditRepository, StoredLine
+Cohesion: 0.48
+Nodes (3): Override, JsonlFileAuditRepository, StoredLine
 
 ### Community 70 - "KafkaActivityLogPublisher"
-Cohesion: 0.18
-Nodes (5): AuditEventMessage, KafkaActivityLogPublisher, KafkaActivityLogPublisher, ActivityLogFacade, Override
+Cohesion: 0.22
+Nodes (4): AuditEventMessage, KafkaActivityLogPublisher, ActivityLogFacade, Override
 
-### Community 71 - "OrderRepository"
-Cohesion: 0.10
-Nodes (12): PlaceOrderService, ActivityLog, ActivityLogPublisher, AuditLevel, ERROR, INFO, WARN, Override (+4 more)
+### Community 71 - "PlaceOrderServiceTest.java"
+Cohesion: 0.13
+Nodes (8): PlaceOrderService, ActivityLog, ActivityLogPublisher, AuditLevel, ERROR, INFO, WARN, RecordingLogPublisher
 
-### Community 72 - "com.fasterxml.jackson.databind.ObjectMapper"
-Cohesion: 0.32
-Nodes (6): com.fasterxml.jackson.databind.ObjectMapper, Override, KafkaOutboxDispatcher, org.springframework.kafka.core.KafkaTemplate, KafkaOutboxDispatcher, AuditEventMessageContractTest
+### Community 72 - ".handle"
+Cohesion: 0.42
+Nodes (3): PlaceOrderCommand, Override, PlaceOrderServiceTest
 
-### Community 73 - "org.junit.jupiter.api.BeforeEach"
-Cohesion: 0.24
-Nodes (6): InvalidOrderTransitionException, OrderStatus, CANCELLED, PAID, PENDING_PAYMENT, org.junit.jupiter.api.BeforeEach
+### Community 73 - "OrderStatus"
+Cohesion: 0.31
+Nodes (5): InvalidOrderTransitionException, OrderStatus, CANCELLED, PAID, PENDING_PAYMENT
 
-### Community 74 - "ApplicationName"
-Cohesion: 0.24
-Nodes (3): ApplicationName, Override, AuditFilterTest
-
-### Community 75 - "TestRepositories"
+### Community 74 - "PaymentEventPort"
 Cohesion: 0.19
-Nodes (3): Connection, TestRepositories, org.junit.jupiter.params.provider.Arguments
+Nodes (5): PaymentEventListener, PaymentEventMessage, PaymentEventPort, UnknownPaymentEventException, PaymentEventFacade
 
-### Community 76 - "org.junit.jupiter.api.DisplayName"
-Cohesion: 0.14
-Nodes (10): PlaceOrderCommand, Override, PlaceOrderServiceTest, CustomerId, Money, ProductId, Quantity, MoneyRules (+2 more)
-
-### Community 77 - "ActivityLogPublisher"
-Cohesion: 0.19
-Nodes (3): CompensateFraudulentOrders, ActivityLogPublisher, PaymentWiring
-
-### Community 79 - "OrderId"
-Cohesion: 0.08
-Nodes (11): FindOrderService, Override, OrderView, FakeRepository, Override, FakeRepository, FindOrderServiceTest, Override (+3 more)
-
-### Community 82 - "InvalidAuditException"
-Cohesion: 0.25
+### Community 75 - "InvalidAuditException"
+Cohesion: 0.27
 Nodes (3): AuditEventMessage, AuditEventTranslator, InvalidAuditException
 
-### Community 88 - "OrderEventOutboxTranslator"
-Cohesion: 0.25
-Nodes (4): OutboxRecord, Override, OrderEventOutboxTranslator, OrderPlacedMessage
+### Community 76 - "org.junit.jupiter.api.Test"
+Cohesion: 0.16
+Nodes (5): KafkaErrorHandlingConfigTest, AuditFilterTest, KafkaErrorHandlingConfigTest, org.junit.jupiter.api.Test, org.springframework.boot.test.context.runner.ApplicationContextRunner
 
-### Community 89 - "OutboxRecord"
-Cohesion: 0.23
-Nodes (5): OutboxRecord, FakeStore, OutboxRecord, Override, OutboxRelayTest
+### Community 88 - "FraudStreamsConfiguration.java"
+Cohesion: 0.47
+Nodes (4): FraudStreamsConfiguration, KafkaStreamsConfiguration, org.springframework.kafka.annotation.EnableKafkaStreams, org.springframework.kafka.config.KafkaStreamsConfiguration
 
-### Community 90 - "FraudEventConsumerConfig.java"
-Cohesion: 0.50
-Nodes (3): ConcurrentKafkaListenerContainerFactory, org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory, FraudEventConsumerConfig
-
-### Community 91 - "OrderRecord"
-Cohesion: 0.13
-Nodes (12): java.sql.PreparedStatement, java.sql.ResultSet, DuckDbOrderLedgerRepository, Override, DuckDbProductSalesRepository, InMemoryOrderLedgerRepository, Override, MoneyCents (+4 more)
+### Community 91 - "PersistenceConfiguration.java"
+Cohesion: 0.17
+Nodes (7): java.sql.PreparedStatement, java.sql.ResultSet, DuckDbProductSalesRepository, MoneyCents, Override, SqliteOrderLedgerRepository, SqliteProductSalesRepository
 
 ### Community 92 - "ActivityLog"
-Cohesion: 0.19
-Nodes (5): ActivityLog, Override, RecordingLogPublisher, RecordingLogPublisher, Override
+Cohesion: 0.15
+Nodes (7): ActivityLog, AuditLevel, ERROR, INFO, WARN, RecordingLogPublisher, RecordingLogPublisher
+
+### Community 93 - "FraudEventConsumerConfig.java"
+Cohesion: 0.50
+Nodes (3): ConcurrentKafkaListenerContainerFactory, org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory, FraudEventConsumerConfig
 
 ### Community 94 - "PaymentEventOutboxTranslator"
 Cohesion: 0.24
 Nodes (5): PaymentEventMessage, OutboxRecord, Override, PaymentEventMessage, PaymentEventOutboxTranslator
 
-### Community 95 - "KafkaActivityLogPublisher"
-Cohesion: 0.20
-Nodes (4): AuditEventMessage, KafkaActivityLogPublisher, KafkaActivityLogPublisher, ActivityLogFacade
+### Community 95 - "com.fasterxml.jackson.databind.ObjectMapper"
+Cohesion: 0.17
+Nodes (9): com.fasterxml.jackson.databind.ObjectMapper, KafkaOutboxDispatcher, org.springframework.kafka.core.KafkaTemplate, KafkaActivityLogPublisher, Override, KafkaOutboxDispatcher, KafkaActivityLogPublisher, ActivityLogFacade (+1 more)
 
-### Community 96 - "PlaceOrderUseCase"
-Cohesion: 0.16
-Nodes (6): PlaceOrderPort, PlaceOrderRequest, PlaceOrderResponse, PlaceOrderUseCase, PlaceOrderFacade, org.springframework.web.bind.annotation.PostMapping
-
-### Community 97 - "AuditLevel"
-Cohesion: 0.24
-Nodes (7): AuditLevel, DEBUG, ERROR, INFO, WARN, isAtLeast(), parse()
-
-### Community 98 - "FakeProductSales"
-Cohesion: 0.36
-Nodes (3): FakeLedger, FakeProductSales, Override
+### Community 96 - "OrderRepository"
+Cohesion: 0.39
+Nodes (3): ApplyPaymentResult, FindOrderService, OrderRepository
 
 ## Knowledge Gaps
-- **81 isolated node(s):** `audit-service-adapters`, `audit-service-application`, `audit-service-bootstrap`, `audit-service-domain`, `DEBUG` (+76 more)
+- **88 isolated node(s):** `audit-service-adapters`, `audit-service-application`, `audit-service-bootstrap`, `audit-service-domain`, `DEBUG` (+83 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **39 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **43 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AuditEvent` connect `AuditEvent` to `AuditController.java`, `AuditLevel`, `DuckDbAuditRepository`, `AuditFilter`, `JsonlFileAuditRepository`, `ApplicationName`, `InvalidAuditException`, `StdoutAuditRepository`, `AuditRepository`?**
-  _High betweenness centrality (0.040) - this node is a cross-community bridge._
-- **Why does `Payment` connect `Payment` to `.request`, `GatewayResult`, `PaymentRepository`, `DomainEvent`, `.handle`?**
+- **Why does `AuditEvent` connect `AuditEvent` to `AuditController.java`, `ApplicationName`, `AuditFilter`, `JsonlFileAuditRepository`, `org.junit.jupiter.api.DisplayName`, `InvalidAuditException`, `org.junit.jupiter.api.Test`, `AuditServiceWiring.java`, `AuditRepository`?**
+  _High betweenness centrality (0.042) - this node is a cross-community bridge._
+- **Why does `Payment` connect `Payment` to `ProcessOrderPaymentTest`, `SqlitePaymentRepository`, `.charge`, `.request`, `DomainEvent`, `PaymentWiring.java`?**
   _High betweenness centrality (0.037) - this node is a cross-community bridge._
-- **Why does `SqliteOrderRepository` connect `SqliteOrderRepository` to `OrderRepository`, `java.sql.Connection`, `Order`, `Money`, `OrderServiceWiring`, `OutboxStore`, `OrderServiceWiring.java`?**
-  _High betweenness centrality (0.028) - this node is a cross-community bridge._
+- **Why does `DeadLetterProperties` connect `DeadLetterProperties` to `org.springframework.context.annotation.Bean`, `DeadLetterProperties`?**
+  _High betweenness centrality (0.031) - this node is a cross-community bridge._
 - **What connects `audit-service-adapters`, `audit-service-application`, `audit-service-bootstrap` to the rest of the system?**
-  _81 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _88 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `AuditController.java` be split into smaller, more focused modules?**
+  _Cohesion score 0.08130081300813008 - nodes in this community are weakly interconnected._
 - **Should `ProductSalesRecord` be split into smaller, more focused modules?**
-  _Cohesion score 0.09954751131221719 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.10196078431372549 - nodes in this community are weakly interconnected._
 - **Should `ProductId` be split into smaller, more focused modules?**
-  _Cohesion score 0.08928571428571429 - nodes in this community are weakly interconnected._
-- **Should `DeadLetterProperties` be split into smaller, more focused modules?**
-  _Cohesion score 0.11695906432748537 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.11591836734693878 - nodes in this community are weakly interconnected._

@@ -22,6 +22,7 @@ readonly LOG_DIR="${SCRIPT_DIR}/logs"
 readonly VERSION="0.1.0-SNAPSHOT"
 
 PROFILE="full"
+JAVA_BIN=""
 KEEP_RUNNING=0
 SKIP_BUILD=0
 MANAGE_INFRA=1
@@ -95,10 +96,34 @@ trap cleanup EXIT INT TERM
 
 require() { command -v "$1" >/dev/null 2>&1 || die "$1 não encontrado no PATH. $2"; }
 
+# `command -v java` não serve como checagem no macOS: existe um shim em
+# /usr/bin/java que responde ao `which` e falha ao rodar, dizendo "Unable to
+# locate a Java Runtime". Um JDK do Homebrew, que o Maven encontra sozinho, não
+# fica no PATH — então a busca precisa ser explícita e terminar num binário que
+# de fato executa.
+resolve_java() {
+  local candidates=()
+  [[ -n "${JAVA_HOME:-}" ]] && candidates+=("${JAVA_HOME}/bin/java")
+  if home="$(/usr/libexec/java_home 2>/dev/null)"; then
+    candidates+=("${home}/bin/java")
+  fi
+  candidates+=(/opt/homebrew/opt/openjdk/bin/java /usr/local/opt/openjdk/bin/java)
+  command -v java >/dev/null 2>&1 && candidates+=("$(command -v java)")
+
+  for candidate in "${candidates[@]}"; do
+    if [[ -x "${candidate}" ]] && "${candidate}" -version >/dev/null 2>&1; then
+      printf '%s' "${candidate}"
+      return 0
+    fi
+  done
+  return 1
+}
+
 log "Verificando pré-requisitos..."
 require k6 "Instale com: brew install k6"
-require java "Instale um JDK 21+"
 require npm "Instale o Node"
+JAVA_BIN="$(resolve_java)" || die "Nenhum JDK executável encontrado. Instale um JDK 21+ (brew install openjdk) ou aponte JAVA_HOME."
+log "JDK: $("${JAVA_BIN}" -version 2>&1 | head -1)"
 if (( MANAGE_INFRA )); then
   require docker "Instale o Docker ou o Colima"
   docker info >/dev/null 2>&1 || die "O daemon do Docker não responde. Suba o Colima: colima start --cpus 4 --memory 8"
@@ -165,7 +190,7 @@ for entry in "${SERVICES[@]}"; do
   [[ -f "${jar}" ]] || die "jar não encontrado: ${jar}  (rode sem --skip-build)"
 
   log "Iniciando ${name}..."
-  java -jar "${jar}" > "${LOG_DIR}/${name}.log" 2>&1 &
+  "${JAVA_BIN}" -jar "${jar}" > "${LOG_DIR}/${name}.log" 2>&1 &
   SERVICE_PIDS+=($!)
 
   if [[ -n "${port}" ]]; then

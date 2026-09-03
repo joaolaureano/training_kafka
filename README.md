@@ -476,6 +476,16 @@ bundle com esbuild antes de rodar — é o que permite usar `@faker-js/faker`.
   acionar a janela do `fraud-service` de forma determinística e não por acidente estatístico.
 - **`fraud_compensation_check`** — um VU com cliente dedicado por iteração, acompanhando o
   ciclo completo até o estorno.
+- **`saga_drain_check`** — roda **depois** que a rampa e a rajada terminaram, coloca alguns
+  pedidos e verifica que liquidam. É ele quem responde à única pergunta que importa sob
+  saturação: o pipeline voltou a andar, ou travou?
+
+> **Por que a convergência é medida em dois lugares.** Durante a carga, `saga_settled` mede
+> fila: um pedido que ainda não liquidou porque há dezenas de milhares na frente conta como
+> não convergido, e o número deixa de distinguir "enfileirado" de "parado". Por isso o
+> perfil completo não impõe limiar sobre ele — quem afirma que nada travou é o
+> `saga_drain_check`, medido com a carga já encerrada. O perfil `smoke`, que roda abaixo da
+> saturação de propósito, mantém o limiar de 95%.
 
 > A rajada de 3 minutos produz **poucos** estornos, não milhares — e isso é correto.
 > `CustomerFraudPattern.register()` só emite na transição de "não fraudulento" para
@@ -489,7 +499,51 @@ curl -s "localhost:8081/metrics/top-products?limit=5"
 curl -s "localhost:8082/audit-events?level=WARN&app=fraud-service&limit=10"
 ```
 
-### O que a carga revelou
+### A Saga sob carga
+
+Rampa completa numa máquina com 4 CPUs (Colima), com a Saga inteira no ar — cinco serviços,
+outbox nos dois lados, compensação por fraude:
+
+| | |
+|---|---|
+| Pedidos aceitos | **53.418** |
+| Rejeitados | 0 |
+| Latência de colocação p(95) / p(99) | 477 ms / 794 ms |
+| Liquidação **fora** de saturação | ~230 ms |
+| Liquidação p(95) **durante** a saturação | 75 s |
+| Estornos por fraude | 3 janelas, 15 pagamentos |
+| Mensagens em DLQ | **0** |
+
+Reconciliação ao final, entre os dois bancos e a trilha de auditoria:
+
+| | Pedidos | Pagamentos | `audit-events` |
+|---|---|---|---|
+| Aprovados | 35.641 PAID | 35.641 APPROVED | 35.656 `payment.approved` |
+| Recusados | 17.742 CANCELLED | 17.742 FAILED | 17.742 `payment.declined` |
+| Estornados | 15 CANCELLED | 15 `refunded=1` | 15 `payment.refunded` |
+| Cancelados sem cobrança | 20 CANCELLED | 20 CANCELLED | 20 `payment.cancelled` |
+
+Fecha exatamente — inclusive os 15 a mais em `payment.approved`, que são os pedidos pagos e
+depois estornados, e por isso aparecem duas vezes na trilha. Nenhuma ocorrência de
+`customerId` na auditoria.
+
+**O que satura, e o que não satura.** A colocação aguenta: p(95) abaixo de meio segundo com
+500 VUs. A liquidação não — mas convergiu integralmente, com os dois outboxes zerados e
+nenhum pedido preso, poucos segundos após a carga cessar. Fora de saturação a Saga inteira
+fecha em ~230 ms; os 75 s do p(95) são fila, não lentidão.
+
+**Dois gargalos encontrados rodando isto de verdade**, ambos corrigidos:
+
+O relay do outbox esperava a confirmação de cada envio antes do próximo — um round-trip por
+evento, com lote de 100 a cada 500 ms, ou seja um teto de ~170 eventos/s enquanto a camada
+HTTP aceitava ordens de magnitude mais. Agora o lote inteiro vai em voo e as confirmações
+são aguardadas em ordem depois; a ordenação continua garantida pelo produtor idempotente
+com uma requisição em voo por conexão, não pelo bloqueio.
+
+E os consumidores rodavam com uma thread para três partições. Duas ficavam ociosas e a Saga
+herdava a vazão de um consumidor só.
+
+### O que a carga revelou no App B
 
 Rodando a rampa completa numa máquina com 4 CPUs (Colima), com App B em DuckDB:
 

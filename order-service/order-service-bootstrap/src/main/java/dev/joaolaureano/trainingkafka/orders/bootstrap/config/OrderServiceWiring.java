@@ -82,33 +82,29 @@ public class OrderServiceWiring {
     /**
      * Um único objeto implementa {@code OrderRepository} e {@code OutboxStore} —
      * é o que garante que o pedido e o seu evento entrem na mesma transação.
+     *
+     * Declarado pelo tipo concreto, e uma vez só. Expor além dele um @Bean por
+     * interface, delegando para este, daria a Spring DOIS candidatos para
+     * {@code OutboxStore} — o delegado e o próprio objeto concreto, que também
+     * implementa a interface — e o contexto não sobe. Quem injeta pede o Port de
+     * que precisa; a resolução é do container.
      */
     @Bean
-    public SqliteOrderRepository sqliteOrderRepository(Connection connection, OutboxTranslator translator) {
+    public SqliteOrderRepository orderRepository(Connection connection, OutboxTranslator translator) {
         return new SqliteOrderRepository(connection, translator);
     }
 
     @Bean
-    public OrderRepository orderRepository(SqliteOrderRepository repository) {
-        return repository;
-    }
-
-    @Bean
-    public OutboxStore outboxStore(SqliteOrderRepository repository) {
-        return repository;
-    }
-
-    @Bean
     public OutboxDispatcher outboxDispatcher(KafkaTemplate<String, Object> kafkaTemplate,
-                                             ObjectMapper objectMapper,
-                                             @Value("${order.outbox.send-timeout-seconds:10}") long sendTimeout) {
-        return new KafkaOutboxDispatcher(kafkaTemplate, objectMapper, sendTimeout);
+                                             ObjectMapper objectMapper) {
+        return new KafkaOutboxDispatcher(kafkaTemplate, objectMapper);
     }
 
     @Bean
     public OutboxRelay outboxRelay(OutboxStore outbox, OutboxDispatcher dispatcher,
-                                   @Value("${order.outbox.batch-size:100}") int batchSize) {
-        return new OutboxRelay(outbox, dispatcher, batchSize);
+                                   @Value("${order.outbox.batch-size:500}") int batchSize,
+                                   @Value("${order.outbox.send-timeout-seconds:10}") long confirmTimeout) {
+        return new OutboxRelay(outbox, dispatcher, batchSize, confirmTimeout);
     }
 
     @Bean

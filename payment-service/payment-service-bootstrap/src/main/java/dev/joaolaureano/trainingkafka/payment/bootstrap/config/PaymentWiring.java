@@ -62,32 +62,26 @@ public class PaymentWiring {
     /**
      * Um único objeto implementa {@code PaymentRepository} e {@code OutboxStore} —
      * é o que garante que o desfecho e o evento entrem na mesma transação.
+     *
+     * Declarado pelo tipo concreto, e uma vez só: um @Bean por interface
+     * delegando para este daria dois candidatos para {@code OutboxStore} e o
+     * contexto não subiria.
      */
     @Bean
-    SqlitePaymentRepository sqlitePaymentRepository(Connection connection, OutboxTranslator translator) {
+    SqlitePaymentRepository paymentRepository(Connection connection, OutboxTranslator translator) {
         return new SqlitePaymentRepository(connection, translator);
     }
 
     @Bean
-    PaymentRepository paymentRepository(SqlitePaymentRepository repository) {
-        return repository;
-    }
-
-    @Bean
-    OutboxStore outboxStore(SqlitePaymentRepository repository) {
-        return repository;
-    }
-
-    @Bean
-    OutboxDispatcher outboxDispatcher(KafkaTemplate<String, Object> template, ObjectMapper objectMapper,
-                                      @Value("${payment.outbox.send-timeout-seconds:10}") long sendTimeout) {
-        return new KafkaOutboxDispatcher(template, objectMapper, sendTimeout);
+    OutboxDispatcher outboxDispatcher(KafkaTemplate<String, Object> template, ObjectMapper objectMapper) {
+        return new KafkaOutboxDispatcher(template, objectMapper);
     }
 
     @Bean
     OutboxRelay outboxRelay(OutboxStore outbox, OutboxDispatcher dispatcher,
-                            @Value("${payment.outbox.batch-size:100}") int batchSize) {
-        return new OutboxRelay(outbox, dispatcher, batchSize);
+                            @Value("${payment.outbox.batch-size:500}") int batchSize,
+                            @Value("${payment.outbox.send-timeout-seconds:10}") long confirmTimeout) {
+        return new OutboxRelay(outbox, dispatcher, batchSize, confirmTimeout);
     }
 
     @Bean

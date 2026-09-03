@@ -6,20 +6,29 @@ import dev.joaolaureano.trainingkafka.orders.adapters.persistence.OutboxStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Drena o outbox para o Kafka.
  *
- * Publica em ordem de sequência e para no primeiro erro: a próxima passagem
- * recomeça da mesma linha, então uma indisponibilidade do broker atrasa a entrega
- * mas não a perde nem a embaralha.
+ * Duas coisas o mantêm correto sob carga:
  *
- * A garantia é at-least-once, e deliberadamente: se o processo morrer entre o ack
- * do broker e a baixa da linha, o evento sai de novo. Quem consome — o
- * payment-service — é idempotente por orderId, que é onde essa duplicata é
- * absorvida. Trocar isso por exactly-once exigiria uma transação englobando Kafka
- * e SQLite, que não existe.
+ * O lote vai em voo de uma vez, e só então as confirmações são aguardadas em
+ * ordem. A versão anterior esperava cada envio antes do próximo, o que impunha um
+ * teto de um round-trip por evento — com um lote de 100 a cada 500ms, cerca de
+ * 170 eventos/s, enquanto a camada HTTP aceita ordens de magnitude mais. O
+ * backlog crescia durante a carga e só drenava depois dela.
+ *
+ * E a passagem drena até esvaziar, em vez de um lote por tick. Um pico não fica
+ * represado esperando o próximo agendamento.
+ *
+ * A ordem se preserva sem o bloqueio: o produtor é idempotente e limitado a uma
+ * requisição em voo por conexão, então a sequência por partição é a de envio. E
+ * a baixa para no primeiro erro — o que não foi confirmado é reenviado na
+ * próxima passagem, at-least-once, absorvido pela idempotência de quem consome.
  */
 public final class OutboxRelay {
 
@@ -28,33 +37,64 @@ public final class OutboxRelay {
     private final OutboxStore outbox;
     private final OutboxDispatcher dispatcher;
     private final int batchSize;
+    private final long confirmTimeoutSeconds;
 
-    public OutboxRelay(OutboxStore outbox, OutboxDispatcher dispatcher, int batchSize) {
+    public OutboxRelay(OutboxStore outbox, OutboxDispatcher dispatcher, int batchSize,
+                       long confirmTimeoutSeconds) {
         this.outbox = outbox;
         this.dispatcher = dispatcher;
         this.batchSize = batchSize;
+        this.confirmTimeoutSeconds = confirmTimeoutSeconds;
     }
 
-    /** Uma passagem pelo outbox. Devolve quantas linhas foram entregues. */
+    /** Drena até esvaziar. Devolve quantas linhas foram entregues. */
     public int drain() {
-        List<OutboxRecord> pending = outbox.pending(batchSize);
         int delivered = 0;
+        while (true) {
+            int batch = drainOnce();
+            delivered += batch;
+            // Lote incompleto significa fila vazia; lote cheio, pico ainda represado.
+            if (batch < batchSize) {
+                return delivered;
+            }
+        }
+    }
+
+    private int drainOnce() {
+        List<OutboxRecord> pending = outbox.pending(batchSize);
+        if (pending.isEmpty()) {
+            return 0;
+        }
+
+        List<CompletableFuture<Void>> inFlight = new ArrayList<>(pending.size());
         for (OutboxRecord record : pending) {
             try {
-                dispatcher.dispatch(record);
+                inFlight.add(dispatcher.dispatch(record));
+            } catch (RuntimeException failure) {
+                log.warn("Outbox não conseguiu enviar a linha {} ({}): {}", record.sequence(),
+                        record.eventType(), failure.getMessage());
+                break;
+            }
+        }
+
+        int confirmed = 0;
+        for (int i = 0; i < inFlight.size(); i++) {
+            OutboxRecord record = pending.get(i);
+            try {
+                inFlight.get(i).get(confirmTimeoutSeconds, TimeUnit.SECONDS);
                 outbox.markPublished(record.sequence());
-                delivered++;
+                confirmed++;
             } catch (InterruptedException interrupted) {
                 Thread.currentThread().interrupt();
                 break;
             } catch (Exception failure) {
-                // Parar aqui preserva a ordem: a linha seguinte não pode ultrapassar
-                // esta. O retry vem na próxima passagem.
+                // Parar aqui preserva a ordem da baixa: o que vier depois é reenviado
+                // na próxima passagem, não confirmado por engano.
                 log.warn("Outbox parado na linha {} ({}): {}", record.sequence(),
                         record.eventType(), failure.getMessage());
                 break;
             }
         }
-        return delivered;
+        return confirmed;
     }
 }

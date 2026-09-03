@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +21,7 @@ class OutboxRelayTest {
         FakeStore store = new FakeStore(record(1, "PaymentApproved"), record(2, "PaymentCancelled"));
         List<Long> sent = new ArrayList<>();
 
-        assertThat(new OutboxRelay(store, r -> sent.add(r.sequence()), 10).drain()).isEqualTo(2);
+        assertThat(new OutboxRelay(store, r -> { sent.add(r.sequence()); return done(); }, 10, 1).drain()).isEqualTo(2);
         assertThat(sent).containsExactly(1L, 2L);
         assertThat(store.pending(10)).isEmpty();
     }
@@ -33,15 +34,20 @@ class OutboxRelayTest {
 
         OutboxRelay relay = new OutboxRelay(store, r -> {
             if (r.sequence() == 1L) {
-                throw new IllegalStateException("broker fora do ar");
+                return CompletableFuture.failedFuture(new IllegalStateException("broker fora do ar"));
             }
             sent.add(r.sequence());
-        }, 10);
+            return done();
+        }, 10, 1);
 
         assertThat(relay.drain()).isZero();
-        assertThat(sent).isEmpty();
-        // Se a 2 tivesse passado, o order-service veria um cancelamento de um pedido
-        // que para ele ainda nem foi pago.
+        /*
+         * A 2 foi despachada, mas NENHUMA foi confirmada — e é isso que importa. Se
+         * a baixa da 2 tivesse acontecido, o PaymentCancelled ficaria dado como
+         * entregue enquanto o PaymentApproved do mesmo pedido se perdia, e o
+         * order-service veria um cancelamento de um pedido que para ele nem foi pago.
+         */
+        assertThat(sent).containsExactly(2L);
         assertThat(store.pending(10)).extracting(OutboxRecord::sequence).containsExactly(1L, 2L);
     }
 
@@ -54,16 +60,21 @@ class OutboxRelayTest {
 
         OutboxRelay relay = new OutboxRelay(store, r -> {
             if (brokerDown[0]) {
-                throw new IllegalStateException("broker fora do ar");
+                return CompletableFuture.failedFuture(new IllegalStateException("broker fora do ar"));
             }
             sent.add(r.sequence());
-        }, 10);
+            return done();
+        }, 10, 1);
 
         assertThat(relay.drain()).isZero();
         brokerDown[0] = false;
 
         assertThat(relay.drain()).isEqualTo(2);
         assertThat(sent).containsExactly(1L, 2L);
+    }
+
+    private static CompletableFuture<Void> done() {
+        return CompletableFuture.completedFuture(null);
     }
 
     private static OutboxRecord record(long sequence, String eventType) {

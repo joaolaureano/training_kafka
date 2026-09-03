@@ -39,6 +39,17 @@ public class FraudEventConsumerConfig {
         properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         properties.remove(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG);
 
+        /*
+         * As `spring.json.*` do application.yml precisam sair daqui.
+         *
+         * Elas configuram o consumidor PADRÃO, fixado em OrderPlacedMessage. Este
+         * deserializer é montado na mão, por setter — e o Spring Kafka recusa as duas
+         * formas ao mesmo tempo, com "must be configured with property setters, or via
+         * configuration properties; not both". O contexto nem sobe.
+         */
+        properties.keySet().removeIf(key ->
+                key.startsWith("spring.json.") || key.startsWith("spring.deserializer."));
+
         ConcurrentKafkaListenerContainerFactory<String, FraudDetectedMessage> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(new DefaultKafkaConsumerFactory<>(properties,

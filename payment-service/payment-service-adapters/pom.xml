@@ -17,12 +17,24 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-jdbc</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.springframework.kafka</groupId>
       <artifactId>spring-kafka</artifactId>
+    </dependency>
+    <!--
+      Autoconfigure, e não starter-jdbc: este serviço abre a própria Connection via
+      DriverManager e não quer o DataSource do Spring — com o starter no classpath, o
+      DataSourceAutoConfiguration exige spring.datasource.url e o contexto não sobe.
+      O que se usa daqui é @ConfigurationProperties e @ConditionalOnProperty, na
+      configuração de DLQ.
+    -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-autoconfigure</artifactId>
+    </dependency>
+    <!-- O starter-jdbc trazia o logging de carona; agora é explícito. -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-logging</artifactId>
     </dependency>
     <!-- O JsonSerializer da DLQ e o contrato JSON dos tópicos precisam do Jackson;
          este serviço não tem starter-web para trazê-lo de carona. -->

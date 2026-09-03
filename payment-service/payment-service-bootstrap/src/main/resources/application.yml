@@ -20,7 +20,9 @@ spring:
         spring.json.add.type.headers: false
       acks: all
     listener:
-      concurrency: 1
+      # Uma thread por partição de `orders`. Com 1, duas das três partições ficavam
+      # ociosas e a Saga inteira herdava a vazão de um consumidor só.
+      concurrency: 3
 
 payment:
   fraud:
@@ -32,8 +34,10 @@ payment:
     sqlite:
       path: ${PAYMENT_DB_PATH:data/payment.db}
   outbox:
-    relay-interval-ms: 500
-    batch-size: 100
+    relay-interval-ms: 200
+    # Lote grande de propósito: o relay põe tudo em voo de uma vez e confirma
+    # depois, então o custo por linha é ínfimo perto do round-trip que ele evita.
+    batch-size: 500
     send-timeout-seconds: 10
 
 kafka:

@@ -28,6 +28,11 @@ spring:
         spring.json.value.default.type: dev.joaolaureano.trainingkafka.orders.adapters.messaging.PaymentEventMessage
         spring.json.use.type.headers: false
         spring.json.trusted.packages: dev.joaolaureano.trainingkafka.orders.adapters.messaging
+    listener:
+      # Uma thread por partição de `payment-events`. Os resultados de um mesmo
+      # pedido caem sempre na mesma partição (chave = orderId), então o paralelismo
+      # não ameaça a ordem que a guarda de transição do agregado depende.
+      concurrency: 3
 
 order:
   payment:
@@ -38,8 +43,10 @@ order:
     sqlite:
       path: ${ORDER_DB_PATH:data/orders.db}
   outbox:
-    relay-interval-ms: 500
-    batch-size: 100
+    relay-interval-ms: 200
+    # Lote grande de propósito: o relay põe tudo em voo de uma vez e confirma
+    # depois, então o custo por linha é ínfimo perto do round-trip que ele evita.
+    batch-size: 500
     send-timeout-seconds: 10
 
 kafka:

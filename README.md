@@ -1,6 +1,6 @@
 # training_kafka
 
-Laboratório de Engenharia de Dados: três microsserviços Spring Boot ligados por Kafka,
+Laboratório de Engenharia de Dados: quatro microsserviços Spring Boot ligados por Kafka,
 modelados com **DDD tático** e **Ports & Adapters**, com carga gerada por k6.
 
 O objetivo aqui não é o produto — é o desenho. A regra que governa tudo:
@@ -23,11 +23,17 @@ então uma `@Service` escrita ali simplesmente não compila.
 │  App A              │ ───────────────► │  App B               │
 │  order-service      │  tópico "orders" │  metrics-consumer    │
 │  :8080              │  key=customerId  │  :8081               │
-└──────────┬──────────┘                  └──────────┬───────────┘
-           │                                        │
-           │  logs estruturados                     │  SuspiciousPatternDetected
-           │                                        │
-           ▼                                        ▼
+└──────────┬──────────┘                              │
+       │                                        │ métricas
+       │                                        │
+       ▼                                        ▼
+     ┌──────────────────────┐  Kafka Streams  ┌──────────────────────┐
+     │  App D               │ ◄───────────────┤  tópico "orders"      │
+     │  fraud-service       │                 │  key=customerId       │
+     │  state store local   │                 └──────────────────────┘
+     └──────────┬───────────┘
+        │ FraudDetected / audit event
+        ▼
       ┌──────────────────────────────────────────────────┐
       │            tópico "audit-events"             │
       └───────────────────────┬──────────────────────────┘
@@ -39,13 +45,73 @@ então uma `@Service` escrita ali simplesmente não compila.
                    └──────────────────────┘
 ```
 
-## Os três serviços
+## Os quatro serviços
 
 | App | Módulo | Porta | O que faz |
 |---|---|---|---|
 | **A** | `order-service` | 8080 | Recebe pedidos por HTTP, valida no domínio, publica em `orders` (particionado por `customerId`) e registra logs estruturados |
 | **B** | `metrics-consumer` | 8081 | Consome `orders`, acumula métricas de venda e detecta padrões suspeitos de pedido |
 | **C** | `audit-service` | 8082 | Consome `audit-events`, persiste e responde consultas por nível/app/período |
+| **D** | `fraud-service` | — | Processa `orders` com Kafka Streams e publica alertas em `audit-events` |
+
+### Fraud com Kafka Streams
+
+O detector de fraude foi separado do `metrics-consumer` porque sua unidade de
+consistência é o cliente, enquanto as métricas de produto têm outra chave natural.
+Um consumer tradicional exigia leitura, poda e gravação JDBC da janela a cada
+pedido. Kafka Streams fornece essa combinação como uma topology stateful, com
+state store local, changelog Kafka e recuperação automática após restart.
+
+```mermaid
+flowchart LR
+  O[orders\nkey: customerId] --> S[KStream<OrderPlacedMessage>]
+  S --> N[selectKey customerId\nsem repartition se a chave for preservada]
+  N --> T[Transformer stateful\ncustomer-fraud-state]
+  T --> F[5 pedidos em 10s\nevent-time + grace 2s]
+  F --> A[audit-events\nkey: customerId]
+```
+
+O `KStream` representa cada pedido. O `customer-fraud-state` é um
+`KeyValueStore` persistente por `customerId`; guarda pedidos recentes, IDs já
+vistos para deduplicação e o maior `occurredAt` observado. O changelog interno
+permite reconstruir o estado sem banco externo. A regra emite um alerta somente
+na transição normal para suspeito.
+
+`occurredAt` é extraído como event-time. Eventos até 2 segundos atrasados ainda
+podem ser processados; eventos mais antigos que o grace period são ignorados para
+não reabrir estado indefinidamente. A ordem só é garantida dentro da partição.
+Como `orders` é publicado com `customerId` e três partições, todos os eventos de
+um cliente chegam à mesma task. O serviço pode escalar até o número de partições,
+distribuindo tasks entre stream threads e instâncias; aumentar threads além das
+partições não cria paralelismo adicional.
+
+O serviço usa `application.id=fraud-service` e `processing.guarantee=exactly_once_v2`.
+Offsets, state store e publicação Kafka são coordenados transacionalmente. Isso
+protege os efeitos Kafka durante replay/restart, mas não torna efeitos externos
+idempotentes. Alertas têm chave de cliente e IDs de pedido determinísticos no
+contexto, enquanto o `audit-service` continua consumindo o contrato existente.
+
+| Tópico | Key | Value | Partições | Producer | Consumer |
+|---|---|---|---:|---|---|
+| `orders` | `customerId` | `OrderPlacedMessage` | 3 | `order-service` | `metrics-consumer`, `fraud-service` |
+| `audit-events` | `customerId` | `AuditEventMessage` | 3 | `order-service`, `fraud-service` | `audit-service` |
+
+O broker mantém auto-criação desligada. `orders` e `audit-events` são criados
+pelos serviços existentes; o state store não é um tópico de negócio e seu
+changelog é gerenciado pelo Kafka Streams.
+
+Para executar apenas o detector:
+
+```bash
+java -jar fraud-service/fraud-service-bootstrap/target/fraud-service-bootstrap-0.1.0-SNAPSHOT.jar
+```
+
+Testes de domínio e topology usam JUnit e `TopologyTestDriver`, cobrindo threshold,
+deduplicação, poda da janela e eventos além do grace period:
+
+```bash
+mvn -pl fraud-service/fraud-service-bootstrap -am test
+```
 
 ---
 
@@ -98,7 +164,7 @@ pelo App A no boot, com 3 partições cada.
 mvn clean install
 ```
 
-### 3. Os três serviços
+### 3. Os quatro serviços
 
 Cada um numa aba de terminal:
 
@@ -106,6 +172,7 @@ Cada um numa aba de terminal:
 java -jar order-service/order-service-bootstrap/target/order-service-bootstrap-0.1.0-SNAPSHOT.jar
 java -jar metrics-consumer/metrics-consumer-bootstrap/target/metrics-consumer-bootstrap-0.1.0-SNAPSHOT.jar
 java -jar audit-service/audit-service-bootstrap/target/audit-service-bootstrap-0.1.0-SNAPSHOT.jar
+java -jar fraud-service/fraud-service-bootstrap/target/fraud-service-bootstrap-0.1.0-SNAPSHOT.jar
 ```
 
 ### 4. Um pedido
@@ -180,14 +247,13 @@ Dois cenários simultâneos:
 - **`normal_traffic`** — rampa `10 → 100 → 500` VUs, cada requisição com cliente próprio.
   Não deve acionar detecção nenhuma.
 - **`suspicious_burst`** — 5 VUs martelando um pool fixo de 5 clientes, sem pausa, para
-  acionar `CustomerOrderPattern.isSuspicious()` de forma determinística e não por acidente
-  estatístico.
+  acionar a janela do `fraud-service` de forma determinística e não por acidente estatístico.
 
 Depois da carga, o efeito é visível nas duas pontas:
 
 ```bash
 curl -s "localhost:8081/metrics/top-products?limit=5"
-curl -s "localhost:8082/audit-events?level=WARN&app=metrics-consumer&limit=10"
+curl -s "localhost:8082/audit-events?level=WARN&app=fraud-service&limit=10"
 ```
 
 ### O que a carga revelou
@@ -286,16 +352,11 @@ dessa escolha é ter que declarar à mão coisas que o parent daria de graça �
 
 ### O modelo de domínio do App B
 
-Três raízes de agregado, porque são três fronteiras de consistência distintas:
+Duas raízes de agregado, porque são duas fronteiras de consistência distintas:
 
 - **`ProductSalesRecord`** (id: `ProductId`) — unidades e faturamento sempre mudam juntos.
   Garantido pela forma da classe: existe um único mutador, e ele move os três campos numa
   operação só.
-- **`CustomerOrderPattern`** (id: `CustomerId`) — mantém a janela de pedidos recentes e
-  **decide sozinho** se o padrão é suspeito. Nenhum serviço externo inspeciona a lista para
-  concluir algo; pergunta-se ao agregado. O alerta dispara na *transição* de normal para
-  suspeito, não a cada pedido acima do limiar — sem isso, uma rajada de 500 pedidos geraria
-  centenas de alertas idênticos.
 - **`OrderRecord`** — ledger append-only, imutável. É o que torna possível responder
   faturamento de **qualquer** período; `ProductSalesRecord` acumula totais sem dimensão
   temporal, e deve continuar assim.
@@ -327,13 +388,11 @@ exato, somável, e se comporta igual nos dois bancos.
 
 ### Concorrência
 
-`spring.kafka.listener.concurrency: 1` no App B, de propósito.
-
-`CustomerOrderPattern` é seguro por construção — o tópico é particionado por `customerId`,
-então cada cliente sempre cai na mesma partição. Mas `ProductSalesRecord` **não**: o mesmo
-produto aparece em pedidos de clientes diferentes, logo em partições diferentes, logo em
-threads diferentes, e dois ciclos `findOrCreate → registerSale → save` concorrentes perderiam
-uma venda.
+`spring.kafka.listener.concurrency: 1` no App B, de propósito. `ProductSalesRecord` não é
+seguro para escritas concorrentes: o mesmo produto aparece em pedidos de clientes diferentes,
+logo em partições diferentes, e dois ciclos `findOrCreate → registerSale → save` concorrentes
+perderiam uma venda. A detecção por cliente não está mais neste consumer: ela usa as tasks e
+state stores do `fraud-service`.
 
 Aumentar esse número exige antes introduzir controle de versão otimista nos repositórios.
 Ficou como exercício explícito, não como esquecimento.

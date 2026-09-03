@@ -22,6 +22,7 @@
     <module>order-service</module>
     <module>metrics-consumer</module>
     <module>audit-service</module>
+    <module>fraud-service</module>
   </modules>
 
   <properties>

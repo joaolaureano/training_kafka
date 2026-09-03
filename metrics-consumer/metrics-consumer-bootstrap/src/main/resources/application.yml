@@ -28,17 +28,9 @@ spring:
       properties:
         spring.json.add.type.headers: false
     listener:
-      # UM consumidor por vez, de propósito.
-      #
-      # CustomerOrderPattern é seguro por construção (o tópico é particionado por
-      # customerId, então cada cliente sempre cai na mesma partição). Mas
-      # ProductSalesRecord NÃO é: o mesmo produto aparece em pedidos de clientes
-      # diferentes, logo em partições diferentes, logo em threads diferentes — e
-      # dois ciclos findOrCreate/registerSale/save concorrentes sobre o mesmo
-      # produto perderiam uma venda (lost update clássico).
-      #
-      # Aumentar este número exige antes introduzir controle de versão otimista
-      # nos repositórios. Ficou como exercício explícito, não como esquecimento.
+      # ProductSalesRecord não é seguro para escritas concorrentes: o mesmo
+      # produto aparece em pedidos de clientes diferentes. O detector de fraude
+      # foi separado para Kafka Streams, que mantém o estado por customerId.
       concurrency: 1
 
 # Dead Letter Queue.
@@ -65,9 +57,6 @@ kafka:
       max-interval: 10s
 
 analytics:
-  suspicion:
-    max-orders: 5
-    window: 10s
   persistence:
     sqlite:
       path: data/metrics.db

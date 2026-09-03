@@ -1,15 +1,11 @@
 package dev.joaolaureano.trainingkafka.analytics.bootstrap.config;
 
-import dev.joaolaureano.trainingkafka.analytics.adapters.persistence.duckdb.DuckDbCustomerPatternRepository;
 import dev.joaolaureano.trainingkafka.analytics.adapters.persistence.duckdb.DuckDbOrderLedgerRepository;
 import dev.joaolaureano.trainingkafka.analytics.adapters.persistence.duckdb.DuckDbProductSalesRepository;
-import dev.joaolaureano.trainingkafka.analytics.adapters.persistence.inmemory.InMemoryCustomerPatternRepository;
 import dev.joaolaureano.trainingkafka.analytics.adapters.persistence.inmemory.InMemoryOrderLedgerRepository;
 import dev.joaolaureano.trainingkafka.analytics.adapters.persistence.inmemory.InMemoryProductSalesRepository;
-import dev.joaolaureano.trainingkafka.analytics.adapters.persistence.sqlite.SqliteCustomerPatternRepository;
 import dev.joaolaureano.trainingkafka.analytics.adapters.persistence.sqlite.SqliteOrderLedgerRepository;
 import dev.joaolaureano.trainingkafka.analytics.adapters.persistence.sqlite.SqliteProductSalesRepository;
-import dev.joaolaureano.trainingkafka.analytics.domain.port.CustomerPatternRepository;
 import dev.joaolaureano.trainingkafka.analytics.domain.port.OrderLedgerRepository;
 import dev.joaolaureano.trainingkafka.analytics.domain.port.ProductSalesRepository;
 import org.slf4j.Logger;
@@ -51,11 +47,6 @@ public class PersistenceConfiguration {
         }
 
         @Bean
-        CustomerPatternRepository customerPatternRepository() {
-            return new InMemoryCustomerPatternRepository();
-        }
-
-        @Bean
         OrderLedgerRepository orderLedgerRepository() {
             return new InMemoryOrderLedgerRepository();
         }
@@ -76,11 +67,6 @@ public class PersistenceConfiguration {
         @Bean
         ProductSalesRepository productSalesRepository(Connection connection) {
             return new SqliteProductSalesRepository(connection);
-        }
-
-        @Bean
-        CustomerPatternRepository customerPatternRepository(Connection connection) {
-            return new SqliteCustomerPatternRepository(connection);
         }
 
         @Bean
@@ -107,11 +93,6 @@ public class PersistenceConfiguration {
         @Bean
         ProductSalesRepository productSalesRepository(Connection connection) {
             return new DuckDbProductSalesRepository(connection);
-        }
-
-        @Bean
-        CustomerPatternRepository customerPatternRepository(Connection connection) {
-            return new DuckDbCustomerPatternRepository(connection);
         }
 
         @Bean

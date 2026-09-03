@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: fraud-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9094}
+
+fraud:
+  max-orders: 5
+  window: 10s
+  grace-period: 2s
+  state-dir: ${FRAUD_STATE_DIR:${java.io.tmpdir}/training-kafka/fraud-state}
+
+logging:
+  level:
+    root: INFO
+    dev.joaolaureano.trainingkafka: DEBUG

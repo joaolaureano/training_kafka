@@ -22,5 +22,5 @@ public record OrderPlaced(
         Quantity quantity,
         Money amount,
         Instant occurredAt
-) implements DomainEvent {
+) {
 }

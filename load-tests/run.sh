@@ -44,6 +44,113 @@ log()  { printf '\033[1;34m▸\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m!\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[1;31m✗\033[0m %s\n' "$*" >&2; exit 1; }
 
+# --- Dead Letter Queue ----------------------------------------------------
+#
+# Uma mensagem na DLQ não é um detalhe de infraestrutura: é uma Saga que não vai
+# terminar sozinha. O pedido correspondente fica num estado não terminal para
+# sempre, e nada no sistema o varre depois.
+#
+# Isto existe porque o k6 NÃO enxerga essa falha. Numa execução real deste
+# projeto ele reportou 13/13 thresholds e "convergiram 100%" enquanto 103
+# pedidos estavam permanentemente travados e 103 mensagens estavam na DLQ — a
+# amostragem dele cobre 2% do tráfego normal, e os travados vieram da rajada,
+# que ele não verifica. Sem esta checagem, a suíte declara sucesso sobre um
+# sistema quebrado.
+
+readonly BROKER=training-kafka-broker
+DLQ_BASELINE=""
+DLQ_CHECKED=0
+
+# Profundidade de cada tópico `-dlt`: uma linha "tópico total" por tópico.
+#
+# `kafka-get-offsets.sh`, e não `kafka.tools.GetOffsetShell`: essa classe saiu no
+# Kafka 4.x. Invocá-la falha com ClassNotFound — e se a saída de erro estiver
+# sendo descartada, como é comum num pipe, o resultado é uma soma vazia. Ou seja,
+# a ferramenta errada faz uma DLQ cheia parecer zerada, que é o pior modo de
+# falha possível para uma checagem como esta.
+dlq_depths() {
+  local bruto
+  bruto="$(docker exec "${BROKER}" /opt/kafka/bin/kafka-get-offsets.sh \
+      --bootstrap-server localhost:9092 --topic '.*-dlt' 2>&1)" || return 1
+
+  # A ferramenta reclamou (regex inválida, broker recusando, tópico inexistente):
+  # devolver soma zero aqui seria transformar "não consegui medir" em "está tudo
+  # limpo", que é o erro exato que esta função existe para não cometer.
+  if grep -qE 'Exception|Error occurred' <<<"${bruto}"; then
+    return 1
+  fi
+
+  awk -F: 'NF == 3 { total[$1] += $3 } END { for (t in total) print t, total[t] }' \
+      <<<"${bruto}" | sort
+}
+
+dlq_reachable() { docker exec "${BROKER}" true >/dev/null 2>&1; }
+
+# Linha de base, tirada antes da carga.
+#
+# Comparar contra zero seria errado: `docker compose down` sem `-v` preserva o
+# volume do broker, então mensagens de uma execução anterior sobrevivem e
+# reprovariam esta por algo que não aconteceu aqui. O que se afirma é o DELTA.
+dlq_snapshot_baseline() {
+  if ! dlq_reachable; then
+    warn "Broker fora de alcance: a checagem de DLQ será PULADA nesta execução."
+    return 0
+  fi
+  if ! DLQ_BASELINE="$(dlq_depths)"; then
+    warn "Não foi possível ler os offsets da DLQ: a checagem será PULADA."
+    return 0
+  fi
+  DLQ_CHECKED=1
+
+  local herdadas
+  herdadas="$(awk '{ s += $2 } END { print s+0 }' <<<"${DLQ_BASELINE}")"
+  if (( herdadas > 0 )); then
+    warn "A DLQ já tinha ${herdadas} mensagem(ns) de execuções anteriores; só o delta desta conta."
+  fi
+}
+
+# Devolve 1 se qualquer `-dlt` cresceu durante a execução.
+dlq_assert_empty() {
+  (( DLQ_CHECKED )) || return 0
+
+  # A carga acabou, mas o pipeline ainda drena: uma mensagem pode chegar à DLQ um
+  # instante depois do k6 sair. Medir cedo demais é falso negativo.
+  sleep 5
+
+  local agora topic depois antes delta total=0
+  local -a cresceram=()
+
+  # A leitura funcionou na linha de base, então falhar agora é anomalia de
+  # verdade — e "não consegui verificar" não pode passar por "está limpo".
+  if ! agora="$(dlq_depths)"; then
+    warn "A DLQ não pôde ser verificada no fim da execução (a leitura inicial funcionou)."
+    return 1
+  fi
+
+  while read -r topic depois; do
+    [[ -z "${topic}" ]] && continue
+    antes="$(awk -v t="${topic}" '$1 == t { print $2 }' <<<"${DLQ_BASELINE}")"
+    delta=$(( depois - ${antes:-0} ))
+    if (( delta > 0 )); then
+      cresceram+=("${topic} ${delta}")
+      total=$(( total + delta ))
+    fi
+  done <<<"${agora}"
+
+  if (( total == 0 )); then
+    log "Dead Letter Queue: nenhuma mensagem nova."
+    return 0
+  fi
+
+  warn "${total} mensagem(ns) foram para a Dead Letter Queue nesta execução:"
+  printf '      %s\n' "${cresceram[@]}" >&2
+  warn "Cada uma é uma Saga que não termina sozinha. Para ver a causa:"
+  printf '      docker exec %s /opt/kafka/bin/kafka-console-consumer.sh \\\n' "${BROKER}" >&2
+  printf '        --bootstrap-server localhost:9092 --topic %s \\\n' "${cresceram[0]%% *}" >&2
+  printf '        --from-beginning --max-messages 1 --property print.headers=true\n' >&2
+  return 1
+}
+
 usage() { sed -n '3,16p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0; }
 
 while [[ $# -gt 0 ]]; do
@@ -211,6 +318,8 @@ sleep 15
 
 # --- Carga ----------------------------------------------------------------
 
+dlq_snapshot_baseline
+
 log "Rodando o k6 (perfil: ${PROFILE})..."
 cd "${SCRIPT_DIR}"
 npm run --silent build
@@ -225,4 +334,17 @@ if (( K6_EXIT != 0 )); then
   warn "Os logs dos serviços ficaram em ${LOG_DIR}/"
 fi
 
-exit "${K6_EXIT}"
+set +e
+dlq_assert_empty
+DLQ_EXIT=$?
+set -e
+
+# O código do k6 tem precedência quando ele falhou, para não mascarar qual
+# threshold estourou; a DLQ já foi reportada em texto de qualquer forma.
+if (( K6_EXIT != 0 )); then
+  exit "${K6_EXIT}"
+fi
+if (( DLQ_EXIT != 0 )); then
+  warn "Os logs dos serviços ficaram em ${LOG_DIR}/"
+fi
+exit "${DLQ_EXIT}"

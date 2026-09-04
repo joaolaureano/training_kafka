@@ -575,6 +575,21 @@ Duas esperas nele não são paranoia:
 - **Rebalance do Kafka Streams.** Entre o `fraud-service` "subir" e a topology estar
   consumindo existe o rebalance. Começar a carga antes disso faria a rajada inicial passar
   sem ser vista, e o teste cobraria uma compensação que nunca teve chance de acontecer.
+- **Portão de Dead Letter Queue.** No fim, o script mede a profundidade de todos os tópicos
+  `-dlt` e **reprova a execução se algum tiver crescido**, mesmo com o k6 verde.
+
+O portão existe porque o k6 sozinho não enxerga essa falha. Numa execução real deste
+projeto ele reportou 13/13 thresholds e "convergiram 100%" enquanto 103 pedidos estavam
+permanentemente travados e 103 mensagens estavam na DLQ — a amostragem dele cobre 2% do
+tráfego normal, e os travados vieram da rajada, que ele não verifica. Uma mensagem na DLQ
+não é detalhe de infraestrutura: é uma Saga que não termina sozinha, e nada no sistema a
+varre depois.
+
+O que ele compara é o **delta**, não o valor absoluto: `docker compose down` sem `-v`
+preserva o volume do broker, então mensagens de execuções anteriores sobrevivem e
+reprovariam esta por algo que não aconteceu nela — elas são reportadas e ignoradas. E se a
+leitura dos offsets falhar depois de ter funcionado na linha de base, o portão reprova em
+vez de passar: "não consegui verificar" não pode ser lido como "está limpo".
 
 Se preferir controlar a stack por fora, `--no-infra` e `--skip-build` pulam o compose e o
 build; `--keep` deixa tudo no ar para você inspecionar. Os logs de cada serviço ficam em

@@ -52,8 +52,15 @@ public class DuckDbAuditRepository implements AuditRepository {
         }
     }
 
+    /**
+     * {@code synchronized}: a {@link Connection} é única e compartilhada — quem a
+     * cria a injeta e a mantém — enquanto os listeners Kafka do App C rodam com
+     * {@code concurrency: 3} e o endpoint HTTP consulta em paralelo. Serializar
+     * aqui custa pouco perto do {@code fsync} de cada INSERT, no mesmo espírito do
+     * {@code JsonlFileAuditRepository}.
+     */
     @Override
-    public void save(AuditEvent entry) {
+    public synchronized void save(AuditEvent entry) {
         // Logs são append-only: nunca há UPDATE aqui, só INSERT.
         String sql = "INSERT INTO audit_events (occurred_at_millis, level, app, action, context_json) "
                 + "VALUES (?, ?, ?, ?, ?)";
@@ -69,8 +76,9 @@ public class DuckDbAuditRepository implements AuditRepository {
         }
     }
 
+    /** Mesma trava do {@link #save(AuditEvent)}, e pelo mesmo motivo: conexão única. */
     @Override
-    public List<AuditEvent> query(AuditFilter filter, int limit) {
+    public synchronized List<AuditEvent> query(AuditFilter filter, int limit) {
         StringBuilder sql = new StringBuilder(
                 "SELECT occurred_at_millis, level, app, action, context_json FROM audit_events WHERE 1 = 1");
         List<Object> params = new ArrayList<>();

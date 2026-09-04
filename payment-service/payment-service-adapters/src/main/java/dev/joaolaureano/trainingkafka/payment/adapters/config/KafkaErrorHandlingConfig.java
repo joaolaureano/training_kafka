@@ -98,8 +98,8 @@ public class KafkaErrorHandlingConfig {
 
     @Bean
     @ConditionalOnProperty(prefix = "kafka.dlq", name = "create-topics", havingValue = "true", matchIfMissing = true)
-    public NewTopic ordersDeadLetterTopic(DeadLetterProperties properties) {
-        return TopicBuilder.name(properties.deadLetterTopicFor(Topics.ORDERS))
+    public NewTopic inventoryEventsDeadLetterTopic(DeadLetterProperties properties) {
+        return TopicBuilder.name(properties.deadLetterTopicFor(Topics.INVENTORY_EVENTS))
                 .partitions(properties.getPartitions())
                 .replicas(properties.getReplicas())
                 .build();

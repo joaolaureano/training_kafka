@@ -51,4 +51,12 @@ public class KafkaTopicsConfig {
                 .replicas(REPLICAS)
                 .build();
     }
+
+    @Bean
+    public NewTopic inventoryEventsTopic() {
+        return TopicBuilder.name(Topics.INVENTORY_EVENTS)
+                .partitions(PARTITIONS)
+                .replicas(REPLICAS)
+                .build();
+    }
 }

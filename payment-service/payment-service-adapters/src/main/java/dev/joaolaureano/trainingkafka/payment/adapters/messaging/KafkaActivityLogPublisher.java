@@ -30,9 +30,13 @@ public class KafkaActivityLogPublisher {
         AuditEventMessage payload = new AuditEventMessage(
                 level, occurredAt.toString(), applicationName, action, context);
 
-        // Chave = nome da aplicação, para agrupar os logs de um mesmo serviço na
-        // mesma partição e preservar a ordem cronológica dentro dele.
-        kafkaTemplate.send(Topics.AUDIT_EVENTS, applicationName, payload)
+        // Chave = o pedido, não o serviço. Com o nome da aplicação, a cardinalidade
+        // da chave era o número de serviços produtores: duas partições recebiam tudo
+        // e a terceira ficava ociosa, por mais partições que o tópico tivesse. Por
+        // pedido, todas as linhas de auditoria da mesma compra — aceite, cobrança,
+        // estorno — caem na mesma partição, na ordem em que aconteceram. Que é a
+        // ordem de que alguém investigando um incidente realmente precisa.
+        kafkaTemplate.send(Topics.AUDIT_EVENTS, partitionKey(context), payload)
                 .whenComplete((result, failure) -> {
                     // Log é telemetria: se o envio falhar, registramos localmente e
                     // seguimos. Recusar um pagamento porque o log não foi publicado
@@ -42,5 +46,33 @@ public class KafkaActivityLogPublisher {
                                 Topics.AUDIT_EVENTS, failure.getMessage());
                     }
                 });
+    }
+
+    /**
+     * Chave de partição derivada do contexto: o correlationId da Saga, se houver,
+     * senão o pedido. Nulo quando não há nenhum dos dois; aí o sticky partitioner
+     * distribui em lotes, que é o comportamento desejado.
+     *
+     * O literal {@code "null"} é descartado de propósito: o contexto é
+     * {@code Map<String, String>} passado por {@code Map.copyOf}, que recusa
+     * valores nulos, então {@code CompensateFraudulentOrders} escreve
+     * {@code String.valueOf(correlationId)} e um correlationId ausente vira a
+     * string "null". Aceitá-la como chave jogaria todas as compensações sem
+     * correlação numa partição só — exatamente o problema que este método existe
+     * para evitar.
+     */
+    private static String partitionKey(Map<String, String> context) {
+        if (context == null) {
+            return null;
+        }
+        String correlationId = usable(context.get("correlationId"));
+        return correlationId != null ? correlationId : usable(context.get("orderId"));
+    }
+
+    private static String usable(String value) {
+        if (value == null || value.isBlank() || "null".equals(value)) {
+            return null;
+        }
+        return value;
     }
 }

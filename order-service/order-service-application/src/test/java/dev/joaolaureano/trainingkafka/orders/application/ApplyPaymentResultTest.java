@@ -35,6 +35,9 @@ class ApplyPaymentResultTest {
         orders = new FakeRepository();
         applyResult = new ApplyPaymentResult(orders);
         Order order = Order.place("cust-1", "Teclado", 1, new BigDecimal("10.00"), NOW);
+        // Desde que o estoque entrou na Saga, o pagamento só decide sobre um pedido
+        // cujas unidades já foram separadas — este é o estado real em que ele chega.
+        order.confirmStock();
         order.pullDomainEvents();
         orders.save(order, List.of());
         orderId = order.id().toString();
@@ -126,6 +129,16 @@ class ApplyPaymentResultTest {
         @Override
         public void save(Order order) {
             save(order, List.of());
+        }
+
+        @Override
+        public boolean applyTransition(dev.joaolaureano.trainingkafka.orders.domain.model.OrderId orderId,
+                                       java.util.function.Consumer<Order> transition) {
+            return findById(orderId).map(order -> {
+                transition.accept(order);
+                save(order);
+                return true;
+            }).orElse(false);
         }
     }
 }

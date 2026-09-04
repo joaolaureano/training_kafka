@@ -12,6 +12,9 @@ public final class Topics {
      */
     public static final String FRAUD_EVENTS = "fraud-events";
 
+    /** O veredito do estoque: o que libera a cobrança, ou encerra o pedido antes dela. */
+    public static final String INVENTORY_EVENTS = "inventory-events";
+
     private Topics() {
     }
 }

@@ -37,6 +37,7 @@ readonly SERVICES=(
   "audit-service:audit-service/audit-service-bootstrap:8082"
   "fraud-service:fraud-service/fraud-service-bootstrap:"
   "payment-service:payment-service/payment-service-bootstrap:"
+  "inventory-service:inventory-service/inventory-service-bootstrap:8083"
 )
 
 log()  { printf '\033[1;34m▸\033[0m %s\n' "$*"; }
@@ -200,7 +201,7 @@ for entry in "${SERVICES[@]}"; do
   fi
 done
 
-log "Os cinco serviços estão no ar."
+log "Os seis serviços estão no ar."
 
 # O fraud-service é Kafka Streams: entre "subiu" e "a topology está consumindo"
 # existe o rebalance. Começar a carga antes disso faria a rajada inicial passar

@@ -24,6 +24,18 @@ class OrderTest {
         return Order.place("cust-1", "Teclado", 2, new BigDecimal("199.90"), NOW);
     }
 
+    /**
+     * Um pedido no ponto em que a cobrança pode acontecer.
+     *
+     * Desde que o estoque entrou na Saga, PENDING_PAYMENT não é mais o estado
+     * inicial: é o segundo. Os testes de pagamento partem daqui.
+     */
+    private static Order reservedOrder() {
+        Order order = validOrder();
+        order.confirmStock();
+        return order;
+    }
+
     @Nested
     @DisplayName("ao registrar um pedido válido")
     class WhenValid {
@@ -38,18 +50,104 @@ class OrderTest {
             assertThat(order.quantity().value()).isEqualTo(2);
             assertThat(order.amount().amount()).isEqualByComparingTo("199.90");
             assertThat(order.placedAt()).isEqualTo(NOW);
+            assertThat(order.status()).isEqualTo(OrderStatus.PENDING_STOCK);
+        }
+
+        @Test
+        @DisplayName("um pedido novo espera o estoque, não o pagamento")
+        void startsWaitingForStock() {
+            assertThat(validOrder().status()).isEqualTo(OrderStatus.PENDING_STOCK);
+        }
+
+        @Test
+        @DisplayName("estoque reservado libera a cobrança, e reentrega não muda nada")
+        void stockConfirmationIsIdempotent() {
+            Order order = validOrder();
+
+            order.confirmStock();
+            order.confirmStock();
+
             assertThat(order.status()).isEqualTo(OrderStatus.PENDING_PAYMENT);
+        }
+
+        @Test
+        @DisplayName("sem estoque, o pedido morre antes de qualquer cobrança")
+        void outOfStockCancelsBeforePayment() {
+            Order order = validOrder();
+
+            order.cancelForOutOfStock();
+            order.cancelForOutOfStock();
+
+            assertThat(order.status()).isEqualTo(OrderStatus.CANCELLED);
+        }
+
+        @Test
+        @DisplayName("resultado de pagamento em PENDING_STOCK é atraso de tópico, não contradição")
+        void paymentResultIsAcceptedWhileStillPendingStock() {
+            /*
+             * Os dois fatos vêm de tópicos diferentes e o Kafka não os ordena entre si.
+             * Se existe um resultado de pagamento, o estoque FOI reservado — o
+             * payment-service só é disparado por StockReserved. Recusar aqui mandava um
+             * resultado legítimo para a DLQ e deixava o pedido preso para sempre.
+             */
+            Order approved = validOrder();
+            approved.approvePayment();
+            assertThat(approved.status()).isEqualTo(OrderStatus.PAID);
+
+            Order failed = validOrder();
+            failed.cancelForPaymentFailure();
+            assertThat(failed.status()).isEqualTo(OrderStatus.CANCELLED);
+        }
+
+        @Test
+        @DisplayName("StockReserved que chega depois do pagamento é a mesma verdade atrasada")
+        void lateStockConfirmationIsANoop() {
+            Order order = validOrder();
+            order.approvePayment();
+
+            order.confirmStock();
+
+            assertThat(order.status())
+                    .as("não pode desfazer o pagamento já aplicado")
+                    .isEqualTo(OrderStatus.PAID);
+        }
+
+        @Test
+        @DisplayName("StockReserved nunca ressuscita um pedido cancelado")
+        void stockCannotResurrectACancelledOrder() {
+            Order cancelled = validOrder();
+            cancelled.cancelForOutOfStock();
+
+            cancelled.confirmStock();
+
+            assertThat(cancelled.status()).isEqualTo(OrderStatus.CANCELLED);
+        }
+
+        @Test
+        @DisplayName("falta de estoque depois de cobrado continua sendo contradição")
+        void stockRejectionAfterPaymentIsStillRejected() {
+            /*
+             * Aqui a guarda estrita é legítima: uma reserva é decidida uma vez só, então
+             * StockRejected e StockReserved são mutuamente exclusivos para o mesmo
+             * pedido. Isto não é atraso de tópico — é impossível.
+             */
+            Order paid = reservedOrder();
+            paid.approvePayment();
+
+            assertThatThrownBy(paid::cancelForOutOfStock)
+                    .isInstanceOf(InvalidOrderTransitionException.class);
+            assertThat(paid.status()).isEqualTo(OrderStatus.PAID);
         }
 
         @Test
         @DisplayName("reaplicar o mesmo resultado de pagamento não muda nada")
         void paymentResultIsIdempotent() {
-            Order approved = validOrder();
+            Order approved = reservedOrder();
             approved.approvePayment();
             approved.approvePayment();
             assertThat(approved.status()).isEqualTo(OrderStatus.PAID);
 
-            Order cancelled = validOrder();
+            Order cancelled = reservedOrder();
             cancelled.cancelForPaymentFailure();
             cancelled.cancelForPaymentFailure();
             assertThat(cancelled.status()).isEqualTo(OrderStatus.CANCELLED);
@@ -58,13 +156,13 @@ class OrderTest {
         @Test
         @DisplayName("resultados contraditórios são recusados, não engolidos")
         void contradictoryResultsAreRejected() {
-            Order paid = validOrder();
+            Order paid = reservedOrder();
             paid.approvePayment();
             assertThatThrownBy(paid::cancelForPaymentFailure)
                     .isInstanceOf(InvalidOrderTransitionException.class);
             assertThat(paid.status()).isEqualTo(OrderStatus.PAID);
 
-            Order cancelled = validOrder();
+            Order cancelled = reservedOrder();
             cancelled.cancelForPaymentFailure();
             assertThatThrownBy(cancelled::approvePayment)
                     .isInstanceOf(InvalidOrderTransitionException.class);
@@ -74,7 +172,7 @@ class OrderTest {
         @Test
         @DisplayName("fraude cancela até um pedido já pago — a única saída de PAID")
         void fraudCancelsEvenAPaidOrder() {
-            Order order = validOrder();
+            Order order = reservedOrder();
             order.approvePayment();
 
             order.cancelForFraud();
@@ -85,7 +183,7 @@ class OrderTest {
         @Test
         @DisplayName("fraude reentregue não muda nada")
         void fraudCancellationIsIdempotent() {
-            Order order = validOrder();
+            Order order = reservedOrder();
             order.approvePayment();
 
             order.cancelForFraud();
@@ -97,7 +195,7 @@ class OrderTest {
         @Test
         @DisplayName("cancelar por fraude é permitido onde cancelar por falha seria contradição")
         void fraudAndPaymentFailureAreDifferentTransitions() {
-            Order paid = validOrder();
+            Order paid = reservedOrder();
             paid.approvePayment();
 
             assertThatThrownBy(paid::cancelForPaymentFailure)
@@ -110,7 +208,7 @@ class OrderTest {
         @Test
         @DisplayName("reconstitui do banco preservando o estado")
         void reconstitutesFromStorage() {
-            Order order = validOrder();
+            Order order = reservedOrder();
             order.approvePayment();
 
             Order loaded = Order.reconstitute(order.id(), order.customerId(), order.productId(),

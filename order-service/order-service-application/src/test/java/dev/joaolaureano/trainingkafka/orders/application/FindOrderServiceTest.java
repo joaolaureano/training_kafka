@@ -40,7 +40,7 @@ class FindOrderServiceTest {
     @DisplayName("devolve o estado corrente do pedido")
     void returnsTheCurrentState() {
         assertThat(findOrder.byId(order.id().toString())).get().satisfies(view -> {
-            assertThat(view.status()).isEqualTo("PENDING_PAYMENT");
+            assertThat(view.status()).isEqualTo("PENDING_STOCK");
             assertThat(view.customerId()).isEqualTo("cust-1");
             assertThat(view.product()).isEqualTo("Teclado");
             assertThat(view.quantity()).isEqualTo(2);
@@ -51,6 +51,11 @@ class FindOrderServiceTest {
     @Test
     @DisplayName("acompanha o desfecho da Saga")
     void followsTheSagaOutcome() {
+        order.confirmStock();
+        orders.save(order);
+        assertThat(findOrder.byId(order.id().toString()).orElseThrow().status())
+                .isEqualTo("PENDING_PAYMENT");
+
         order.approvePayment();
         orders.save(order);
         assertThat(findOrder.byId(order.id().toString()).orElseThrow().status()).isEqualTo("PAID");
@@ -91,6 +96,16 @@ class FindOrderServiceTest {
         @Override
         public void save(Order order) {
             save(order, List.of());
+        }
+
+        @Override
+        public boolean applyTransition(dev.joaolaureano.trainingkafka.orders.domain.model.OrderId orderId,
+                                       java.util.function.Consumer<Order> transition) {
+            return findById(orderId).map(order -> {
+                transition.accept(order);
+                save(order);
+                return true;
+            }).orElse(false);
         }
     }
 }

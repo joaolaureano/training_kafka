@@ -21,6 +21,26 @@ import { faker } from '@faker-js/faker';
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 
+// O App F: é dele que o catálogo precisa vir antes de qualquer pedido existir.
+const INVENTORY_URL = __ENV.INVENTORY_URL || 'http://localhost:8083';
+
+/*
+ * Estoque semeado por produto.
+ *
+ * Absurdamente alto de propósito. O que este teste mede é a Saga, não a
+ * escassez: se a rampa esgotasse o catálogo no meio, metade dos pedidos passaria
+ * a ser cancelada por falta de estoque e os thresholds de aprovação acusariam
+ * uma falha que não existe. A escassez é testada num cenário próprio, com um SKU
+ * dedicado.
+ */
+const SEEDED_STOCK = Number(__ENV.SEEDED_STOCK || 100000000);
+
+// Produto que existe no catálogo e está zerado — a rejeição por falta de estoque.
+const OUT_OF_STOCK_SKU = 'ESGOTADO-LOAD-TEST';
+
+// Produto que não existe no catálogo — a outra rejeição, por motivo diferente.
+const UNKNOWN_SKU = 'INEXISTENTE-LOAD-TEST';
+
 // Precisa bater com `fraud.max-orders` no application.yml do App D.
 const FRAUD_MAX_ORDERS = Number(__ENV.FRAUD_MAX_ORDERS || 5);
 
@@ -63,6 +83,8 @@ const PROFILES = {
     burstVus: 5,
     burstStart: '20s',
     burstDuration: '3m',
+    // Sem pausa: aqui a saturação é o ponto, e `assertSettleRate: false` assume isso.
+    burstPauseS: 0,
     compensationStart: '45s',
     compensationIterations: 3,
     compensationMaxDuration: '4m',
@@ -79,6 +101,9 @@ const PROFILES = {
     drainStart: '3m40s',
     drainIterations: 5,
     drainMaxDuration: '3m',
+    stockStart: '50s',
+    stockIterations: 3,
+    stockMaxDuration: '3m',
     // Sob saturação, liquidar parcialmente durante a carga é o esperado. Quem
     // afirma que o pipeline não travou é o cenário de drenagem, não este número.
     assertSettleRate: false,
@@ -104,6 +129,21 @@ const PROFILES = {
     burstVus: 2,
     burstStart: '3s',
     burstDuration: '20s',
+    /*
+     * Pausa entre as rajadas — e é o que mantém o smoke sendo um smoke.
+     *
+     * Sem ela, dois VUs disparando 8 pedidos sem intervalo ofereciam ~280
+     * pedidos/s, e desde que o estoque entrou na Saga isso satura: `orders` ganhou
+     * um quarto consumidor que faz commit em SQLite por mensagem, e a medição de
+     * ~283 msg/s por consumidor documentada mais abaixo é justamente esse teto. O
+     * p(95) passava a medir fila, que é exatamente o que este perfil não quer
+     * medir.
+     *
+     * A pausa é ENTRE iterações, nunca dentro: a rajada inteira continua saindo
+     * sem intervalo, então o detector de fraude segue cruzando a janela do mesmo
+     * jeito. O que cai é a frequência das rajadas, não o formato de cada uma.
+     */
+    burstPauseS: 0.5,
     compensationStart: '6s',
     compensationIterations: 1,
     compensationMaxDuration: '90s',
@@ -116,6 +156,9 @@ const PROFILES = {
     drainStart: '35s',
     drainIterations: 2,
     drainMaxDuration: '90s',
+    stockStart: '8s',
+    stockIterations: 2,
+    stockMaxDuration: '90s',
     assertSettleRate: true,
   },
 };
@@ -162,6 +205,18 @@ const ordersPaid = new Counter('orders_settled_paid');
 const ordersCancelled = new Counter('orders_settled_cancelled');
 const compensationsObserved = new Counter('fraud_compensations_observed');
 const paidBeforeCompensation = new Counter('fraud_compensations_after_payment');
+
+/*
+ * A rejeição por estoque, que é o desfecho novo da Saga.
+ *
+ * Medida à parte das outras porque ela é a mais rápida de todas: o pedido morre
+ * no primeiro elo, sem passar pelo gateway. Somá-la a `saga_settled` puxaria o
+ * p(95) para baixo e faria o número parecer melhor do que o pagamento de fato é.
+ */
+const stockRejectionSettled = new Rate('stock_rejection_settled');
+const stockRejectionDuration = new Trend('stock_rejection_duration', true);
+const ordersCancelledForStock = new Counter('orders_cancelled_for_stock');
+const paidWithoutStock = new Counter('orders_paid_without_stock');
 
 // --- Catálogo -------------------------------------------------------------
 
@@ -256,6 +311,24 @@ export const options = {
       exec: 'verifyDrain',
       tags: { scenario: 'drain' },
     },
+
+    /*
+     * O pedido que não pode ser atendido.
+     *
+     * Isolado num cenário próprio pelo mesmo motivo da compensação: ele usa SKUs
+     * dedicados, que não podem entrar no sorteio do tráfego normal. E é o único
+     * cenário que afirma algo NEGATIVO — que o pedido não foi cobrado —, o que
+     * exige acompanhar o pedido inteiro em vez de amostrar.
+     */
+    out_of_stock_check: {
+      executor: 'per-vu-iterations',
+      vus: 1,
+      iterations: PROFILE.stockIterations,
+      maxDuration: PROFILE.stockMaxDuration,
+      startTime: PROFILE.stockStart,
+      exec: 'verifyStockRejection',
+      tags: { scenario: 'stock' },
+    },
   },
 
   thresholds: {
@@ -278,8 +351,55 @@ export const options = {
     // porque inclui a janela do detector, que é tempo de negócio, não de sistema.
     'fraud_compensations_observed': ['count>0'],
     'fraud_compensation_duration': ['p(95)<40000'],
+    /*
+     * A rejeição por estoque precisa acontecer — e precisa acontecer SEM cobrança.
+     * O segundo threshold é o que de fato justifica reservar antes de cobrar: se
+     * um único pedido sem estoque chegar a PAID, a ordem dos elos está errada.
+     */
+    'orders_cancelled_for_stock': ['count>0'],
+    'orders_paid_without_stock': ['count==0'],
+    'stock_rejection_settled': ['rate>0.95'],
   },
 };
+
+// --- Semeadura do catálogo -------------------------------------------------
+
+/*
+ * Roda UMA vez, antes de qualquer VU, e é obrigatório desde que o estoque entrou
+ * na Saga: sem catálogo, todo pedido seria rejeitado com UNKNOWN_PRODUCT e o
+ * teste mediria a rejeição em vez do pagamento.
+ *
+ * O PUT é idempotente e a quantidade é absoluta, então rodar o teste dez vezes
+ * seguidas devolve o catálogo ao mesmo estado — sem isso, uma execução herdaria
+ * o estoque consumido pela anterior e os resultados deixariam de ser comparáveis.
+ */
+export function setup() {
+  const seeded = [];
+
+  for (const product of CATALOG) {
+    if (putProduct(product.name, product.name, SEEDED_STOCK)) {
+      seeded.push(product.name);
+    }
+  }
+
+  // O produto que existe e está zerado, para a rejeição por falta de estoque.
+  putProduct(OUT_OF_STOCK_SKU, 'Produto esgotado (teste de carga)', 0);
+
+  if (seeded.length !== CATALOG.length) {
+    throw new Error(
+      `catálogo incompleto: ${seeded.length}/${CATALOG.length} produtos semeados em ` +
+      `${INVENTORY_URL}. O App F está no ar?`);
+  }
+  return { seeded: seeded.length };
+}
+
+function putProduct(sku, name, available) {
+  const response = http.put(
+    `${INVENTORY_URL}/products/${encodeURIComponent(sku)}`,
+    JSON.stringify({ name, available }),
+    { headers: { 'Content-Type': 'application/json' }, tags: { scenario: 'setup' } });
+  return response.status === 200;
+}
 
 // --- Colocação de pedido ---------------------------------------------------
 
@@ -403,6 +523,11 @@ export function placeSuspiciousBurst() {
     }, { scenario: 'burst' });
     suspiciousOrdersSent.add(1);
   }
+
+  // Ver `burstPauseS`: a pausa vem depois da rajada completa, jamais no meio dela.
+  if (PROFILE.burstPauseS > 0) {
+    sleep(PROFILE.burstPauseS);
+  }
 }
 
 /*
@@ -487,6 +612,62 @@ export function verifyDrain() {
 }
 
 /*
+ * Os dois motivos pelos quais um pedido morre antes de ser cobrado.
+ *
+ * O que se verifica aqui não é só que o pedido termina CANCELLED — é que ele
+ * NUNCA passa por PAID no caminho. Um pedido sem estoque que fosse cobrado e
+ * depois estornado também terminaria em CANCELLED, e o teste não veria diferença
+ * se olhasse apenas o estado final. Por isso o polling registra se PAID chegou a
+ * aparecer.
+ */
+export function verifyStockRejection() {
+  for (const sku of [OUT_OF_STOCK_SKU, UNKNOWN_SKU]) {
+    const orderId = placeOrder({
+      customerId: `estoque-${__ITER}-${Date.now()}`,
+      product: sku,
+      quantity: 1,
+      // Abaixo do limite do gateway: se houvesse cobrança, ela seria APROVADA.
+      // É o que torna o `orders_paid_without_stock` um teste de verdade.
+      amount: 10.0,
+    }, { scenario: 'stock' });
+
+    if (orderId === null) {
+      continue;
+    }
+
+    const startedAt = Date.now();
+    let sawPaid = false;
+    let cancelled = false;
+
+    while (Date.now() - startedAt < SETTLE_TIMEOUT_MS) {
+      const status = readOrder(orderId, 'stock');
+      if (status === 'PAID') {
+        sawPaid = true;
+      }
+      if (status === 'CANCELLED') {
+        cancelled = true;
+        break;
+      }
+      sleep(POLL_INTERVAL_S);
+    }
+
+    stockRejectionSettled.add(cancelled);
+    if (cancelled) {
+      stockRejectionDuration.add(Date.now() - startedAt);
+      ordersCancelledForStock.add(1);
+    }
+    if (sawPaid) {
+      paidWithoutStock.add(1);
+    }
+
+    check({ cancelled, sawPaid }, {
+      'pedido sem estoque foi cancelado': (r) => r.cancelled,
+      'pedido sem estoque nunca foi cobrado': (r) => !r.sawPaid,
+    });
+  }
+}
+
+/*
  * Entrada usada apenas em execução avulsa (`k6 run --vus N --duration Xs`).
  * Passar --vus/--duration pela linha de comando faz o k6 descartar os cenários
  * declarados em `options` e procurar um export default — daí este atalho, útil
@@ -511,6 +692,9 @@ export function handleSummary(data) {
   const drainRate = data.metrics.saga_drain_settled?.values?.rate ?? 0;
   const drainTime = data.metrics.saga_drain_duration?.values ?? {};
   const compensationTime = data.metrics.fraud_compensation_duration?.values ?? {};
+  const stockCancelled = count('orders_cancelled_for_stock');
+  const stockPaid = count('orders_paid_without_stock');
+  const stockTime = data.metrics.stock_rejection_duration?.values ?? {};
 
   /*
    * Sobrescrever handleSummary substitui o relatório padrão do k6 INTEIRO —
@@ -547,6 +731,11 @@ export function handleSummary(data) {
     '  DEPOIS DA CARGA (é aqui que se vê se travou)',
     `  liquidaram                ${(drainRate * 100).toFixed(1)}%`,
     `  tempo até terminal p(95)  ${(drainTime['p(95)'] ?? 0).toFixed(0)} ms`,
+    '─────────────────────────────────────────────',
+    '  ESTOQUE (rejeição antes da cobrança)',
+    `  cancelados sem estoque    ${stockCancelled}`,
+    `  cobrados sem estoque      ${stockPaid}   (tem que ser zero — é a razão de reservar antes)`,
+    `  tempo até o cancelamento p(95) ${(stockTime['p(95)'] ?? 0).toFixed(0)} ms`,
     '─────────────────────────────────────────────',
     '  COMPENSAÇÃO POR FRAUDE',
     `  pagos antes do estorno    ${paidThenCompensated}`,

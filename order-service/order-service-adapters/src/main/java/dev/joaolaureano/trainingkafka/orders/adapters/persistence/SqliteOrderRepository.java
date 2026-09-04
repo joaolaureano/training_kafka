@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * O estado do pedido e o outbox, no mesmo arquivo SQLite e na mesma transação.
@@ -89,6 +90,23 @@ public final class SqliteOrderRepository implements OrderRepository, OutboxStore
     @Override
     public void save(Order order) {
         save(order, List.of());
+    }
+
+    /**
+     * A leitura-escrita atômica: {@code synchronized} sobre a mesma instância que
+     * todo mundo usa, então os dois escritores do pedido — estoque e pagamento —
+     * nunca se atropelam. Ver o javadoc no Port para o porquê.
+     */
+    @Override
+    public synchronized boolean applyTransition(OrderId orderId, Consumer<Order> transition) {
+        Optional<Order> found = findById(orderId);
+        if (found.isEmpty()) {
+            return false;
+        }
+        Order order = found.get();
+        transition.accept(order);
+        save(order);
+        return true;
     }
 
     @Override

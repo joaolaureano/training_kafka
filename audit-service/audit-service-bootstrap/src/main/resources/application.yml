@@ -20,7 +20,10 @@ spring:
         spring.json.use.type.headers: false
         spring.json.trusted.packages: dev.joaolaureano.trainingkafka.audit.adapters.messaging
     listener:
-      concurrency: 1
+      # Uma thread por partição de audit-events. Só faz sentido porque a chave do
+      # tópico passou a ser o pedido: com a chave antiga (nome da aplicação) duas
+      # threads carregariam toda a carga e a terceira ficaria parada.
+      concurrency: 3
 
 # Dead Letter Queue.
 #

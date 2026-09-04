@@ -24,6 +24,7 @@
     <module>audit-service</module>
     <module>fraud-service</module>
     <module>payment-service</module>
+    <module>inventory-service</module>
   </modules>
 
   <properties>

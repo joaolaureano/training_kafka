@@ -16,11 +16,14 @@ import dev.joaolaureano.trainingkafka.orders.application.FindOrderUseCase;
 import dev.joaolaureano.trainingkafka.orders.application.PlaceOrderService;
 import dev.joaolaureano.trainingkafka.orders.application.PlaceOrderUseCase;
 import dev.joaolaureano.trainingkafka.orders.application.port.ActivityLogPublisher;
+import dev.joaolaureano.trainingkafka.orders.adapters.messaging.InventoryEventPort;
 import dev.joaolaureano.trainingkafka.orders.bootstrap.facade.ActivityLogFacade;
+import dev.joaolaureano.trainingkafka.orders.bootstrap.facade.InventoryEventFacade;
 import dev.joaolaureano.trainingkafka.orders.bootstrap.facade.FindOrderFacade;
 import dev.joaolaureano.trainingkafka.orders.bootstrap.facade.PlaceOrderFacade;
 import dev.joaolaureano.trainingkafka.orders.domain.port.OrderRepository;
 import dev.joaolaureano.trainingkafka.orders.application.ApplyPaymentResult;
+import dev.joaolaureano.trainingkafka.orders.application.ApplyStockResult;
 import dev.joaolaureano.trainingkafka.orders.adapters.messaging.PaymentEventPort;
 import dev.joaolaureano.trainingkafka.orders.bootstrap.facade.PaymentEventFacade;
 import org.springframework.beans.factory.annotation.Value;
@@ -149,5 +152,15 @@ public class OrderServiceWiring {
     @Bean
     public PaymentEventPort paymentEventPort(ApplyPaymentResult applyResult) {
         return new PaymentEventFacade(applyResult);
+    }
+
+    @Bean
+    public ApplyStockResult applyStockResult(OrderRepository orders) {
+        return new ApplyStockResult(orders);
+    }
+
+    @Bean
+    public InventoryEventPort inventoryEventPort(ApplyStockResult applyResult) {
+        return new InventoryEventFacade(applyResult);
     }
 }

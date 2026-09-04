@@ -108,6 +108,15 @@ public class KafkaErrorHandlingConfig {
                 .build();
     }
 
+    @Bean
+    @ConditionalOnProperty(prefix = "kafka.dlq", name = "create-topics", havingValue = "true", matchIfMissing = true)
+    public NewTopic inventoryEventsDeadLetterTopic(DeadLetterProperties properties) {
+        return TopicBuilder.name(properties.deadLetterTopicFor(Topics.INVENTORY_EVENTS))
+                .partitions(properties.getPartitions())
+                .replicas(properties.getReplicas())
+                .build();
+    }
+
     /** Erro permanente: retentar é só adiar o inevitável. */
     private static void notRetryable(DefaultErrorHandler errorHandler) {
         errorHandler.addNotRetryableExceptions(

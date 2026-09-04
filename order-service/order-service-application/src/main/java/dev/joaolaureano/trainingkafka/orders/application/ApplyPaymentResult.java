@@ -42,10 +42,18 @@ public final class ApplyPaymentResult {
         apply(orderId, Order::cancelForFraud);
     }
 
+    /**
+     * Carregar, transicionar e gravar acontece dentro do repositório, num passo só.
+     *
+     * O pedido tem dois escritores concorrentes — os resultados de estoque e de
+     * pagamento chegam por tópicos diferentes, em threads diferentes. Um
+     * {@code findById} seguido de {@code save} aqui deixaria a janela do lost
+     * update, e o pedido ficaria preso num estado que nenhum dos dois eventos
+     * pediu, sem exceção e sem DLQ.
+     */
     private void apply(String orderId, Consumer<Order> transition) {
-        OrderId id = OrderId.parse(orderId);
-        Order order = orders.findById(id).orElseThrow(() -> new UnknownOrderException(orderId));
-        transition.accept(order);
-        orders.save(order);
+        if (!orders.applyTransition(OrderId.parse(orderId), transition)) {
+            throw new UnknownOrderException(orderId);
+        }
     }
 }

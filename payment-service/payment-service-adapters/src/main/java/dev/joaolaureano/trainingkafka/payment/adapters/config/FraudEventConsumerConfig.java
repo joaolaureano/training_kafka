@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * Container próprio para {@code fraud-events}.
  *
- * O consumidor padrão do serviço está fixado em {@code OrderPlacedMessage} — sem
+ * O consumidor padrão do serviço está fixado em {@code InventoryEventMessage} — sem
  * cabeçalho de tipo na mensagem, que é o acoplamento que se quis evitar, o tipo
  * precisa ser decidido na configuração. Dois tópicos com contratos diferentes,
  * portanto, exigem dois containers; um único {@code default.type} desserializaria
@@ -42,7 +42,7 @@ public class FraudEventConsumerConfig {
         /*
          * As `spring.json.*` do application.yml precisam sair daqui.
          *
-         * Elas configuram o consumidor PADRÃO, fixado em OrderPlacedMessage. Este
+         * Elas configuram o consumidor PADRÃO, fixado em InventoryEventMessage. Este
          * deserializer é montado na mão, por setter — e o Spring Kafka recusa as duas
          * formas ao mesmo tempo, com "must be configured with property setters, or via
          * configuration properties; not both". O contexto nem sobe.

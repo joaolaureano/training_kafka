@@ -47,12 +47,12 @@ class PlaceOrderServiceTest {
     }
 
     @Test
-    @DisplayName("grava o pedido em PENDING_PAYMENT junto com o evento")
+    @DisplayName("grava o pedido em PENDING_STOCK junto com o evento")
     void persistsOrderWithEvent() {
         var orderId = service.handle(new PlaceOrderCommand("cust-1", "Teclado", 2, new BigDecimal("199.90")));
 
         assertThat(events.saved.get(orderId).status())
-                .isEqualTo(dev.joaolaureano.trainingkafka.orders.domain.model.OrderStatus.PENDING_PAYMENT);
+                .isEqualTo(dev.joaolaureano.trainingkafka.orders.domain.model.OrderStatus.PENDING_STOCK);
         assertThat(events.published).hasSize(1);
     }
 
@@ -155,6 +155,16 @@ class PlaceOrderServiceTest {
         @Override
         public void save(Order order) {
             save(order, List.of());
+        }
+
+        @Override
+        public boolean applyTransition(dev.joaolaureano.trainingkafka.orders.domain.model.OrderId orderId,
+                                       java.util.function.Consumer<Order> transition) {
+            return findById(orderId).map(order -> {
+                transition.accept(order);
+                save(order);
+                return true;
+            }).orElse(false);
         }
     }
 

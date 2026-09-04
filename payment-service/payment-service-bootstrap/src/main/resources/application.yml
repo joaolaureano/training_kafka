@@ -10,7 +10,7 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       properties:
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
-        spring.json.value.default.type: dev.joaolaureano.trainingkafka.payment.adapters.messaging.OrderPlacedMessage
+        spring.json.value.default.type: dev.joaolaureano.trainingkafka.payment.adapters.messaging.InventoryEventMessage
         spring.json.use.type.headers: false
         spring.json.trusted.packages: dev.joaolaureano.trainingkafka.payment.adapters.messaging
     producer:
@@ -20,8 +20,9 @@ spring:
         spring.json.add.type.headers: false
       acks: all
     listener:
-      # Uma thread por partição de `orders`. Com 1, duas das três partições ficavam
-      # ociosas e a Saga inteira herdava a vazão de um consumidor só.
+      # Uma thread por partição de `inventory-events`. Com 1, duas das três
+      # partições ficavam ociosas e a Saga inteira herdava a vazão de um
+      # consumidor só.
       concurrency: 3
 
 payment:

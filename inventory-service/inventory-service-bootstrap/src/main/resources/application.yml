@@ -1,0 +1,82 @@
+spring:
+  application:
+    name: inventory-service
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9094}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+      properties:
+        # Sem cabeçalho de tipo Java na mensagem: o consumidor não deve precisar
+        # conhecer o nome da classe de quem produz para desserializar.
+        spring.json.add.type.headers: false
+        # Preserva a ordem por partição mesmo com retentativa.
+        max.in.flight.requests.per.connection: 1
+        enable.idempotence: true
+    consumer:
+      group-id: inventory-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.value.default.type: dev.joaolaureano.trainingkafka.inventory.adapters.messaging.OrderPlacedMessage
+        spring.json.use.type.headers: false
+        spring.json.trusted.packages: dev.joaolaureano.trainingkafka.inventory.adapters.messaging
+    listener:
+      # Uma thread por partição de `orders`. A disputa pelo mesmo produto entre
+      # threads é esperada, e quem a resolve é o bloqueio otimista do repositório
+      # — não a serialização do consumo.
+      concurrency: 3
+
+inventory:
+  payment:
+    # Grupo próprio: payment-events tem contrato e offset independentes de orders.
+    group-id: ${INVENTORY_PAYMENT_GROUP_ID:inventory-service-payment}
+  persistence:
+    sqlite:
+      path: ${INVENTORY_DB_PATH:data/inventory.db}
+  stock:
+    # Quantas vezes reler e redecidir antes de devolver a mensagem ao container.
+    # Perder a corrida é normal sob carga; perder cinco seguidas indica disputa
+    # extrema, e aí a retentativa mais lenta do container é a resposta certa.
+    optimistic-attempts: ${INVENTORY_OPTIMISTIC_ATTEMPTS:5}
+  outbox:
+    relay-interval-ms: 200
+    # Lote grande de propósito: o relay põe tudo em voo de uma vez e confirma
+    # depois, então o custo por linha é ínfimo perto do round-trip que ele evita.
+    batch-size: 500
+    send-timeout-seconds: 10
+
+kafka:
+  dlq:
+    enabled: true
+    topic-suffix: -dlt
+    create-topics: true
+    partitions: 3
+    replicas: 1
+    retry:
+      attempts: 2
+      initial-interval: 1s
+      multiplier: 2.0
+      max-interval: 10s
+
+server:
+  port: 8083
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    dev.joaolaureano.trainingkafka: DEBUG

@@ -10,14 +10,14 @@ import dev.joaolaureano.trainingkafka.payment.adapters.persistence.OutboxDispatc
 import dev.joaolaureano.trainingkafka.payment.adapters.persistence.OutboxStore;
 import dev.joaolaureano.trainingkafka.payment.adapters.persistence.OutboxTranslator;
 import dev.joaolaureano.trainingkafka.payment.adapters.messaging.FraudEventPort;
-import dev.joaolaureano.trainingkafka.payment.adapters.messaging.OrderPlacedPort;
+import dev.joaolaureano.trainingkafka.payment.adapters.messaging.StockReservedPort;
 import dev.joaolaureano.trainingkafka.payment.adapters.persistence.SqlitePaymentRepository;
 import dev.joaolaureano.trainingkafka.payment.application.CompensateFraudulentOrders;
 import dev.joaolaureano.trainingkafka.payment.application.ProcessOrderPayment;
 import dev.joaolaureano.trainingkafka.payment.application.port.ActivityLogPublisher;
 import dev.joaolaureano.trainingkafka.payment.bootstrap.facade.ActivityLogFacade;
 import dev.joaolaureano.trainingkafka.payment.bootstrap.facade.FraudEventFacade;
-import dev.joaolaureano.trainingkafka.payment.bootstrap.facade.OrderPlacedFacade;
+import dev.joaolaureano.trainingkafka.payment.bootstrap.facade.StockReservedFacade;
 import dev.joaolaureano.trainingkafka.payment.domain.port.PaymentGateway;
 import dev.joaolaureano.trainingkafka.payment.domain.port.PaymentRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -108,8 +108,8 @@ public class PaymentWiring {
     }
 
     @Bean
-    OrderPlacedPort orderPlacedPort(ProcessOrderPayment processPayment) {
-        return new OrderPlacedFacade(processPayment);
+    StockReservedPort stockReservedPort(ProcessOrderPayment processPayment) {
+        return new StockReservedFacade(processPayment);
     }
 
     @Bean

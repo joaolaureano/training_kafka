@@ -35,6 +35,10 @@ spring:
       concurrency: 3
 
 order:
+  inventory:
+    # Grupo próprio: inventory-events tem contrato e offset independentes dos
+    # demais tópicos que o App A consome.
+    group-id: ${ORDER_INVENTORY_GROUP_ID:order-service-inventory}
   payment:
     # Grupo próprio: o consumo de payment-events é independente do de qualquer
     # outro tópico e precisa do próprio offset.

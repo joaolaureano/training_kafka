@@ -19,3 +19,4 @@ load-tests/logs/
 
 # macOS
 .DS_Store
+graphify-out .serena
